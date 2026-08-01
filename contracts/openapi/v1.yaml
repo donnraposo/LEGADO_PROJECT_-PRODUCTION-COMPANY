@@ -6,6 +6,110 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/invitations:
+    get:
+      operationId: listInvitations
+      summary: Lista convites da empresa para Proprietários
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Convites da empresa
+    post:
+      operationId: createInvitation
+      summary: Cria um convite de uso único válido por sete dias
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "201":
+          description: Convite criado
+  /api/v1/invitations/accept:
+    post:
+      operationId: acceptInvitation
+      summary: Aceita um convite vinculado ao e-mail autenticado
+      responses:
+        "200":
+          description: Convite aceito
+  /api/v1/invitations/{invitation_id}:
+    delete:
+      operationId: cancelInvitation
+      summary: Cancela um convite pendente
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: invitation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Convite cancelado
+  /api/v1/members:
+    get:
+      operationId: listMembers
+      summary: Lista membros da empresa para Proprietários
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Membros da empresa
+  /api/v1/members/{membership_id}:
+    patch:
+      operationId: updateMembership
+      summary: Altera papel ou estado preservando um Proprietário ativo
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: membership_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Vínculo atualizado
+  /api/v1/projects/{project_id}/access/{user_id}:
+    put:
+      operationId: grantProjectAccess
+      summary: Concede acesso de projeto a um Administrador ativo
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Acesso concedido
+    delete:
+      operationId: revokeProjectAccess
+      summary: Revoga acesso de projeto de um Administrador
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Acesso revogado
   /api/v1/clients:
     get:
       operationId: listClients

@@ -4,8 +4,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from modules.companies.adapters.api.company_context import require_company_membership
 from modules.companies.domain.value_objects.membership_role import MembershipRole
-from modules.projects.adapters.api.company_context import require_company_membership
 from modules.projects.adapters.api.serializers.create_project_request_serializer import (
     CreateProjectRequestSerializer,
 )

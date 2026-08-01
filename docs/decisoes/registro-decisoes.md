@@ -145,6 +145,14 @@ Ao retomar este projeto:
 
 ## 41. Histórico do documento
 
+### 1º de agosto de 2026 — versão 0.17
+
+- implementados convites de uso único com validade de sete dias;
+- tokens de convite persistidos somente como resumo SHA-256;
+- aceite vinculado ao HMAC do e-mail da conta autenticada;
+- implementadas gestão de membros e proteção do último Proprietário ativo;
+- implementadas concessão e revogação de acesso a projetos.
+
 ### 1º de agosto de 2026 — versão 0.16
 
 - implementada a primeira fatia de clientes e projetos;

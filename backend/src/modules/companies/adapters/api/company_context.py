@@ -26,5 +26,8 @@ def require_company_membership(request) -> MembershipModel:
     return membership
 
 
-def is_owner(membership: MembershipModel) -> bool:
-    return membership.role == MembershipRole.OWNER
+def require_owner(request) -> MembershipModel:
+    membership = require_company_membership(request)
+    if membership.role != MembershipRole.OWNER:
+        raise PermissionDenied("Operação exclusiva de Proprietário.")
+    return membership

@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from modules.projects.adapters.api.company_context import require_company_membership
+from modules.companies.adapters.api.company_context import require_company_membership
 from modules.projects.adapters.api.serializers.create_client_request_serializer import (
     CreateClientRequestSerializer,
 )

@@ -26,7 +26,8 @@
 
 - concluída a base inicial de identidade e empresas;
 - implementada a primeira fatia de clientes, projetos e acesso empresarial;
-- próximos incrementos: convites, membros e atribuição de projetos por Proprietários.
+- concluídos convites, gestão básica de membros e atribuição de projetos;
+- próximo incremento: auditoria das operações administrativas e entrega de e-mail.
 
 Concluir a infraestrutura além da base local já validada:
 

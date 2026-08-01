@@ -11,5 +11,9 @@ Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empr
 - acesso automático do Administrador ao projeto criado;
 - negação para usuário sem vínculo empresarial;
 - bloqueio do uso de cliente pertencente a outra empresa.
+- aceite único de convite vinculado ao e-mail autenticado;
+- rejeição do convite por conta diferente;
+- proteção do último Proprietário ativo;
+- concessão e revogação de acesso a projetos.
 
 Consulte também [Critérios de aceite](criterios-aceite.md) e [Requisitos não funcionais](../01-produto/requisitos-nao-funcionais.md).
