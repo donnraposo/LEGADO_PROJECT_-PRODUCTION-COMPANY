@@ -5,6 +5,7 @@ from modules.companies.domain.value_objects.membership_status import MembershipS
 
 
 class UpdateMembershipRequestSerializer(serializers.Serializer):
+    expected_version = serializers.IntegerField(min_value=1)
     role = serializers.ChoiceField(choices=[role.value for role in MembershipRole], required=False)
     status = serializers.ChoiceField(
         choices=[status.value for status in MembershipStatus], required=False

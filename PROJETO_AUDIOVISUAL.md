@@ -45,6 +45,7 @@
 ### Entrega e continuidade
 
 - [Estado e roadmap](docs/04-entrega/roadmap.md)
+- [Estado detalhado da implementação](docs/04-entrega/estado-implementacao.md)
 - [Plano de testes](docs/04-entrega/plano-testes.md)
 - [Critérios de aceite](docs/04-entrega/criterios-aceite.md)
 - [Operação e recuperação](docs/04-entrega/operacao-recuperacao.md)

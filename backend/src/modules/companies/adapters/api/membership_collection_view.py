@@ -14,7 +14,7 @@ class MembershipCollectionView(APIView):
         return Response({"items": [self.serialize(item) for item in memberships]})
 
     @staticmethod
-    def serialize(membership: MembershipModel) -> dict[str, object]:
+    def serialize(membership: object) -> dict[str, object]:
         return {
             "id": str(membership.id),
             "user_id": str(membership.user_id),

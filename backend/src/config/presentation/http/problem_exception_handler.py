@@ -4,6 +4,8 @@ from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, Va
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
+from config.presentation.http.conflict_error import ConflictError
+
 
 def problem_exception_handler(exc: Exception, context: dict[str, object]) -> Response | None:
     response = exception_handler(exc, context)
@@ -15,6 +17,9 @@ def problem_exception_handler(exc: Exception, context: dict[str, object]) -> Res
     if isinstance(exc, (AuthenticationFailed, NotAuthenticated)):
         code = "AUTHENTICATION_REQUIRED"
         title = "Autenticação necessária"
+    elif isinstance(exc, ConflictError):
+        code = "VERSION_CONFLICT"
+        title = "Conflito de versão"
     elif isinstance(exc, ValidationError):
         code = "VALIDATION_ERROR"
         title = "Dados inválidos"

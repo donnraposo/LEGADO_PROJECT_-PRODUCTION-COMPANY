@@ -2,6 +2,7 @@ from django.conf import settings
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from modules.audit.infrastructure.persistence.models.audit_event_model import AuditEventModel
 from modules.companies.infrastructure.persistence.models.company_model import CompanyModel
 from modules.companies.infrastructure.persistence.models.membership_model import MembershipModel
 from modules.identity.adapters.api.authenticated_principal import AuthenticatedPrincipal
@@ -67,6 +68,14 @@ class MembershipManagementTest(TestCase):
 
         assert accepted.status_code == 200
         assert accepted.json()["role"] == "ADMINISTRATOR"
+        assert AuditEventModel.objects.filter(
+            company_id=self.company.id,
+            event_type="COMPANY_INVITATION_CREATED",
+        ).exists()
+        assert AuditEventModel.objects.filter(
+            company_id=self.company.id,
+            event_type="COMPANY_INVITATION_ACCEPTED",
+        ).exists()
         assert (
             self.api(self.admin, with_company=False)
             .post("/api/v1/invitations/accept", {"token": token}, format="json")
@@ -92,16 +101,75 @@ class MembershipManagementTest(TestCase):
 
         assert response.status_code == 400
 
+    def test_owner_cancels_pending_invitation_and_acceptance_is_rejected(self) -> None:
+        invitation = self.api(self.owner).post(
+            "/api/v1/invitations",
+            {"email": "admin@example.com", "role": "ADMINISTRATOR"},
+            format="json",
+        )
+        invitation_id = invitation.json()["id"]
+        token = invitation.json()["token"]
+
+        cancelled = self.api(self.owner).delete(f"/api/v1/invitations/{invitation_id}")
+        acceptance = self.api(self.admin, with_company=False).post(
+            "/api/v1/invitations/accept",
+            {"token": token},
+            format="json",
+        )
+
+        assert cancelled.status_code == 204
+        assert acceptance.status_code == 400
+        assert AuditEventModel.objects.filter(
+            company_id=self.company.id,
+            event_type="COMPANY_INVITATION_CANCELLED",
+            subject_id=invitation_id,
+        ).exists()
+
     def test_last_active_owner_cannot_be_demoted(self) -> None:
         response = self.api(self.owner).patch(
             f"/api/v1/members/{self.owner_membership.id}",
-            {"role": "ADMINISTRATOR"},
+            {"role": "ADMINISTRATOR", "expected_version": 1},
             format="json",
         )
 
         assert response.status_code == 400
         self.owner_membership.refresh_from_db()
         assert self.owner_membership.role == "OWNER"
+
+    def test_stale_membership_version_is_rejected(self) -> None:
+        response = self.api(self.owner).patch(
+            f"/api/v1/members/{self.owner_membership.id}",
+            {"status": "BLOCKED", "expected_version": 99},
+            format="json",
+        )
+
+        assert response.status_code == 409
+
+    def test_only_owner_can_list_company_audit(self) -> None:
+        MembershipModel.objects.create(
+            company=self.company,
+            user=self.admin,
+            role="ADMINISTRATOR",
+            status="ACTIVE",
+        )
+        AuditEventModel.objects.create(
+            company_id=self.company.id,
+            actor_user_id=self.owner.id,
+            event_type="TEST_EVENT",
+            action_name="Evento de teste",
+            description="Evento criado para validar a consulta.",
+            subject_type="company",
+            subject_id=self.company.id,
+        )
+
+        owner_response = self.api(self.owner).get("/api/v1/audit-events")
+        admin_response = self.api(self.admin).get("/api/v1/audit-events")
+
+        assert owner_response.status_code == 200
+        assert owner_response.json()["items"][0]["event_type"] == "TEST_EVENT"
+        assert owner_response.json()["items"][0]["action_name"] == "Evento de teste"
+        assert owner_response.json()["items"][0]["change_state"] == {}
+        assert admin_response.status_code == 403
 
     def test_owner_grants_and_revokes_project_access(self) -> None:
         MembershipModel.objects.create(
@@ -126,5 +194,7 @@ class MembershipManagementTest(TestCase):
 
         assert self.api(self.owner).put(endpoint).status_code == 204
         assert ProjectAccessModel.objects.filter(project=project, user=self.admin).exists()
+        assert AuditEventModel.objects.filter(event_type="PROJECT_ACCESS_GRANTED").exists()
         assert self.api(self.owner).delete(endpoint).status_code == 204
         assert not ProjectAccessModel.objects.filter(project=project, user=self.admin).exists()
+        assert AuditEventModel.objects.filter(event_type="PROJECT_ACCESS_REVOKED").exists()

@@ -6,6 +6,19 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/audit-events:
+    get:
+      operationId: listAuditEvents
+      summary: Lista eventos imutáveis da empresa para Proprietários
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Eventos de auditoria da empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventCollection"
   /api/v1/invitations:
     get:
       operationId: listInvitations
@@ -253,6 +266,63 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    AuditEventCollection:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+        next_cursor:
+          type: [string, "null"]
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - actor_user_id
+        - event_type
+        - action_name
+        - description
+        - subject_type
+        - subject_id
+        - old_state
+        - new_state
+        - change_state
+        - correlation_id
+        - occurred_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        actor_user_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        action_name:
+          type: string
+        description:
+          type: string
+        subject_type:
+          type: string
+        subject_id:
+          type: string
+          format: uuid
+        old_state:
+          type: [object, "null"]
+        new_state:
+          type: [object, "null"]
+        change_state:
+          type: object
+        correlation_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
     LiveHealth:
       type: object
       additionalProperties: false

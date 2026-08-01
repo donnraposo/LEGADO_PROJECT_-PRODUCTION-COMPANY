@@ -1,7 +1,3 @@
-import hashlib
-import secrets
-from datetime import timedelta
-
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -9,58 +5,80 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from modules.companies.adapters.api.company_context import require_owner
-from modules.companies.adapters.api.personal_data_protector_factory import (
-    create_personal_data_protector,
-)
 from modules.companies.adapters.api.serializers.create_invitation_request_serializer import (
     CreateInvitationRequestSerializer,
 )
-from modules.companies.infrastructure.persistence.models.invitation_model import InvitationModel
-from modules.companies.infrastructure.persistence.models.membership_model import MembershipModel
-from modules.identity.domain.value_objects.email_address import EmailAddress
+from modules.companies.application.dto.create_invitation_command import (
+    CreateInvitationCommand,
+)
+from modules.companies.application.exceptions import ActiveMemberAlreadyExistsError
+from modules.companies.application.use_cases.create_invitation_use_case import (
+    CreateInvitationUseCase,
+)
+from modules.companies.application.use_cases.list_invitations_use_case import (
+    ListInvitationsUseCase,
+)
+from modules.companies.infrastructure.audit.django_audit_event_recorder import (
+    DjangoAuditEventRecorder,
+)
+from modules.companies.infrastructure.cryptography.django_personal_data_protection import (
+    DjangoPersonalDataProtection,
+)
+from modules.companies.infrastructure.notifications.celery_invitation_delivery import (
+    CeleryInvitationDelivery,
+)
+from modules.companies.infrastructure.persistence.django_invitation_creation_repository import (
+    DjangoInvitationCreationRepository,
+)
+from modules.companies.infrastructure.persistence.django_invitation_query_repository import (
+    DjangoInvitationQueryRepository,
+)
+from modules.companies.infrastructure.persistence.django_unit_of_work import DjangoUnitOfWork
 
 
 class InvitationCollectionView(APIView):
     def get(self, request) -> Response:
         membership = require_owner(request)
-        invitations = InvitationModel.objects.filter(company_id=membership.company_id)
+        invitations = ListInvitationsUseCase(DjangoInvitationQueryRepository()).execute(
+            membership.company_id
+        )
         return Response({"items": [self._serialize(item) for item in invitations]})
 
     def post(self, request) -> Response:
         membership = require_owner(request)
         serializer = CreateInvitationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = EmailAddress(serializer.validated_data["email"])
-        protector = create_personal_data_protector()
-        email_lookup = protector.exact_lookup(email.value)
-        if MembershipModel.objects.filter(
-            company_id=membership.company_id,
-            user__email_lookup_hmac=email_lookup,
-            status="ACTIVE",
-        ).exists():
-            raise ValidationError("Esta conta já é membro ativo da empresa.")
-        InvitationModel.objects.filter(
-            company_id=membership.company_id,
-            email_lookup_hmac=email_lookup,
-            accepted_at__isnull=True,
-            cancelled_at__isnull=True,
-        ).update(cancelled_at=timezone.now())
-        token = secrets.token_urlsafe(32)
-        invitation = InvitationModel.objects.create(
-            company_id=membership.company_id,
-            email_ciphertext=protector.encrypt(email.value),
-            email_lookup_hmac=email_lookup,
-            token_digest=hashlib.sha256(token.encode("utf-8")).hexdigest(),
-            role=serializer.validated_data["role"],
-            invited_by_user_id=request.user.id,
-            expires_at=timezone.now() + timedelta(days=7),
-        )
-        payload = self._serialize(invitation)
-        payload["token"] = token
+        try:
+            invitation = CreateInvitationUseCase(
+                DjangoInvitationCreationRepository(),
+                DjangoPersonalDataProtection(),
+                CeleryInvitationDelivery(),
+                DjangoAuditEventRecorder(),
+                DjangoUnitOfWork(),
+            ).execute(
+                CreateInvitationCommand(
+                    company_id=membership.company_id,
+                    company_name=membership.company.name,
+                    actor_user_id=request.user.id,
+                    email=serializer.validated_data["email"],
+                    role=serializer.validated_data["role"],
+                    created_at=timezone.now(),
+                )
+            )
+        except ActiveMemberAlreadyExistsError as exc:
+            raise ValidationError("Esta conta já é membro ativo da empresa.") from exc
+        payload = {
+            "id": str(invitation.id),
+            "role": invitation.role,
+            "expires_at": invitation.expires_at.isoformat(),
+            "accepted_at": None,
+            "cancelled_at": None,
+            "token": invitation.token,
+        }
         return Response(payload, status=status.HTTP_201_CREATED)
 
     @staticmethod
-    def _serialize(invitation: InvitationModel) -> dict[str, object]:
+    def _serialize(invitation: object) -> dict[str, object]:
         return {
             "id": str(invitation.id),
             "role": invitation.role,
