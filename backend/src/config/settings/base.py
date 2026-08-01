@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "modules.identity.apps.IdentityConfig",
     "modules.companies.apps.CompaniesConfig",
+    "modules.projects.apps.ProjectsConfig",
 ]
 
 MIDDLEWARE = [

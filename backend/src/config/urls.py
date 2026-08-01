@@ -8,4 +8,5 @@ urlpatterns = [
     path("health/ready", ReadinessHealthView.as_view(), name="health-ready"),
     path("api/v1/", include("modules.identity.urls")),
     path("api/v1/", include("modules.companies.urls")),
+    path("api/v1/", include("modules.projects.urls")),
 ]

@@ -22,6 +22,12 @@
 
 ## Próxima etapa
 
+### Implementação incremental em andamento
+
+- concluída a base inicial de identidade e empresas;
+- implementada a primeira fatia de clientes, projetos e acesso empresarial;
+- próximos incrementos: convites, membros e atribuição de projetos por Proprietários.
+
 Concluir a infraestrutura além da base local já validada:
 
 1. Docker para produção;

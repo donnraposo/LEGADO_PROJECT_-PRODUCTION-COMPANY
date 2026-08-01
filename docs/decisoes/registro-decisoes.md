@@ -145,6 +145,13 @@ Ao retomar este projeto:
 
 ## 41. Histórico do documento
 
+### 1º de agosto de 2026 — versão 0.16
+
+- implementada a primeira fatia de clientes e projetos;
+- adotado `X-Company-ID` como contexto empresarial explícito da API inicial;
+- aplicadas unicidade normalizada e filtragem obrigatória por empresa;
+- Administradores recebem acesso automático aos projetos que criarem.
+
 ### 1º de agosto de 2026 — versão 0.15
 
 - autorizado o início da implementação incremental;

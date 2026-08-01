@@ -6,6 +6,40 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/clients:
+    get:
+      operationId: listClients
+      summary: Lista clientes ativos da empresa selecionada
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Clientes disponíveis
+    post:
+      operationId: createClient
+      summary: Cria um cliente na empresa selecionada
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "201":
+          description: Cliente criado
+  /api/v1/projects:
+    get:
+      operationId: listProjects
+      summary: Lista projetos acessíveis da empresa selecionada
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Projetos disponíveis
+    post:
+      operationId: createProject
+      summary: Cria um projeto e concede acesso ao administrador criador
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "201":
+          description: Projeto criado
   /health/live:
     get:
       operationId: getLiveHealth
@@ -89,6 +123,14 @@ paths:
         "401":
           $ref: "#/components/responses/AuthenticationRequired"
 components:
+  parameters:
+    CompanyId:
+      name: X-Company-ID
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     keycloak:
       type: openIdConnect
