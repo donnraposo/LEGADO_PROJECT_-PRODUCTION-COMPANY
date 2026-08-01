@@ -23,6 +23,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "modules.identity.apps.IdentityConfig",
     "modules.companies.apps.CompaniesConfig",
+    "modules.projects.apps.ProjectsConfig",
+    "modules.audit.apps.AuditConfig",
+    "modules.notifications.apps.NotificationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -138,3 +141,7 @@ PERSONAL_DATA_ENCRYPTION_KEYS = [
     if key.strip()
 ]
 PERSONAL_DATA_HMAC_KEY = os.environ.get("PERSONAL_DATA_HMAC_KEY", "")
+INVITATION_PUBLIC_URL = os.environ.get(
+    "INVITATION_PUBLIC_URL", "http://127.0.0.1:5173/invitations/accept"
+)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@legado.local")

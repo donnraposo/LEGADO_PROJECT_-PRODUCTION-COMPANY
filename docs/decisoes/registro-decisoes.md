@@ -145,6 +145,74 @@ Ao retomar este projeto:
 
 ## 41. Histórico do documento
 
+### 1º de agosto de 2026 — versão 0.24
+
+- criação e listagem de convites migradas para casos de uso e portas;
+- proteção de dados pessoais e entrega assíncrona isoladas por adaptadores;
+- criação, substituição do convite anterior, auditoria e agendamento executados sob unidade de trabalho;
+- removidos ORM, criptografia, token e Celery da view de coleção;
+- criado teste arquitetural específico para as views de convites.
+
+### 1º de agosto de 2026 — versão 0.23
+
+- tabela `audit_events` evoluída sem criação de fonte concorrente de auditoria;
+- adicionados nome e descrição funcional da ação;
+- `before` e `after` renomeados para `old_state` e `new_state` com preservação dos dados;
+- adicionado `change_state` calculado campo a campo;
+- migration preenche os novos campos também para eventos existentes;
+- API e testes atualizados para o novo contrato.
+
+### 1º de agosto de 2026 — versão 0.22
+
+- cancelamento de convite migrado para caso de uso e porta de persistência;
+- cancelamento e auditoria executados na mesma unidade de trabalho;
+- removidos ORM e auditoria direta da view de detalhe do convite;
+- adicionado teste de rejeição do aceite após cancelamento.
+
+### 1º de agosto de 2026 — versão 0.21
+
+- aceite de convite migrado para caso de uso independente de framework;
+- busca bloqueada do convite, validações, ativação do vínculo e auditoria mantidas na mesma transação;
+- removidos ORM, transação e regras de negócio da view de aceite;
+- mantidos os erros públicos já definidos no contrato.
+
+### 1º de agosto de 2026 — versão 0.20
+
+- concessão e revogação de acesso a projetos migradas para casos de uso e portas;
+- autorização empresarial implementada por adaptador de composição entre módulos;
+- persistência e auditoria da alteração de acesso protegidas por unidade de trabalho;
+- removidas regras de acesso e imports de ORM da view correspondente.
+
+### 1º de agosto de 2026 — versão 0.19
+
+- iniciada a consolidação das operações administrativas em casos de uso e portas;
+- atualização de membros migrada para aplicação independente do framework;
+- conflitos de versão padronizados como HTTP `409`;
+- criado teste arquitetural contra dependências de framework no domínio e aplicação;
+- disponibilizada consulta de auditoria exclusiva para Proprietários.
+
+### 1º de agosto de 2026 — versão 0.18
+
+- implementada auditoria imutável para operações administrativas;
+- implementado envio assíncrono de convites por Celery e adaptador de e-mail Django;
+- mantidos tokens fora dos eventos de auditoria;
+- parametrizados endereço público de aceite e remetente de e-mail.
+
+### 1º de agosto de 2026 — versão 0.17
+
+- implementados convites de uso único com validade de sete dias;
+- tokens de convite persistidos somente como resumo SHA-256;
+- aceite vinculado ao HMAC do e-mail da conta autenticada;
+- implementadas gestão de membros e proteção do último Proprietário ativo;
+- implementadas concessão e revogação de acesso a projetos.
+
+### 1º de agosto de 2026 — versão 0.16
+
+- implementada a primeira fatia de clientes e projetos;
+- adotado `X-Company-ID` como contexto empresarial explícito da API inicial;
+- aplicadas unicidade normalizada e filtragem obrigatória por empresa;
+- Administradores recebem acesso automático aos projetos que criarem.
+
 ### 1º de agosto de 2026 — versão 0.15
 
 - autorizado o início da implementação incremental;

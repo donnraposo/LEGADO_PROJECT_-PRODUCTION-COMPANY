@@ -22,6 +22,20 @@
 
 ## Próxima etapa
 
+### Implementação incremental em andamento
+
+- concluída a base inicial de identidade e empresas;
+- implementada a primeira fatia de clientes, projetos e acesso empresarial;
+- concluídos convites, gestão básica de membros e atribuição de projetos;
+- concluídas auditoria administrativa imutável e entrega assíncrona de convites;
+- concluídas consulta de auditoria e concorrência otimista inicial para membros;
+- em andamento a migração das demais operações para casos de uso e portas.
+- concluída a migração de alteração de membros e acessos de projeto para casos de uso.
+- concluída a migração do aceite de convites para caso de uso e portas.
+- concluída a migração do cancelamento de convites para caso de uso e portas.
+- concluída a migração de criação e listagem de convites para casos de uso e portas.
+- concluída a evolução dos eventos com nome, descrição e diferenças campo a campo.
+
 Concluir a infraestrutura além da base local já validada:
 
 1. Docker para produção;

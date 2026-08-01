@@ -1,0 +1,1 @@
+"""Notificações e entregas assíncronas."""
