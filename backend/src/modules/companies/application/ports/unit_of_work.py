@@ -1,0 +1,18 @@
+from abc import ABC, abstractmethod
+from types import TracebackType
+from typing import Self
+
+
+class UnitOfWork(ABC):
+    @abstractmethod
+    def __enter__(self) -> Self:
+        raise NotImplementedError
+
+    @abstractmethod
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
+        raise NotImplementedError

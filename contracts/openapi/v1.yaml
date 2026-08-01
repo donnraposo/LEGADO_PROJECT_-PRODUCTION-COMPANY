@@ -1,0 +1,196 @@
+openapi: 3.1.0
+info:
+  title: LEGADO API
+  version: 0.1.0
+  description: Contrato inicial da API central da plataforma LEGADO.
+servers:
+  - url: /
+paths:
+  /health/live:
+    get:
+      operationId: getLiveHealth
+      summary: Verifica se o processo está ativo
+      security: []
+      responses:
+        "200":
+          description: Processo ativo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveHealth"
+  /health/ready:
+    get:
+      operationId: getReadinessHealth
+      summary: Verifica dependências necessárias ao atendimento
+      security: []
+      responses:
+        "200":
+          description: Serviço pronto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessHealth"
+        "503":
+          description: Dependência indisponível
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessHealth"
+  /api/v1/me:
+    get:
+      operationId: getCurrentUser
+      summary: Retorna a projeção do usuário autenticado
+      security:
+        - keycloak: []
+      responses:
+        "200":
+          description: Usuário autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+  /api/v1/companies:
+    get:
+      operationId: listCompanies
+      summary: Lista empresas ativas do usuário
+      security:
+        - keycloak: []
+      responses:
+        "200":
+          description: Empresas disponíveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyCollection"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+    post:
+      operationId: createCompany
+      summary: Cria uma empresa e torna o usuário Proprietário
+      security:
+        - keycloak: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompany"
+      responses:
+        "201":
+          description: Empresa criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyMembership"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+components:
+  securitySchemes:
+    keycloak:
+      type: openIdConnect
+      openIdConnectUrl: http://127.0.0.1:8080/realms/legado/.well-known/openid-configuration
+  responses:
+    AuthenticationRequired:
+      description: Autenticação necessária
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    ValidationError:
+      description: Dados inválidos
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    LiveHealth:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    ReadinessHealth:
+      type: object
+      additionalProperties: false
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+          enum: [ready, unavailable]
+        checks:
+          type: object
+          additionalProperties: false
+          required: [database, redis]
+          properties:
+            database:
+              type: boolean
+            redis:
+              type: boolean
+    CurrentUser:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+    CreateCompany:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+    CompanyMembership:
+      type: object
+      additionalProperties: false
+      required: [id, name, role, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+          enum: [OWNER, ADMINISTRATOR]
+        version:
+          type: integer
+          minimum: 1
+    CompanyCollection:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyMembership"
+        next_cursor:
+          type: [string, "null"]
+    Problem:
+      type: object
+      required: [type, title, status, code, detail, trace_id]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        detail:
+          type: string
+        trace_id:
+          type: string
+          format: uuid

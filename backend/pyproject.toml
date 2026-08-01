@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=80,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "legado-backend"
+version = "0.1.0"
+description = "Backend central da plataforma LEGADO"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "Django==5.2.16",
+    "djangorestframework==3.17.1",
+    "channels==4.3.2",
+    "channels-redis[cryptography]==4.3.0",
+    "daphne==4.2.2",
+    "psycopg[binary,pool]==3.3.4",
+  "celery[redis]==5.6.3",
+  "PyJWT[crypto]==2.10.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4,<9",
+    "pytest-django>=4.11,<5",
+    "ruff>=0.12,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+exclude = ["build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]

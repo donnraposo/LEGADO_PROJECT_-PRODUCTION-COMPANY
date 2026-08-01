@@ -1,0 +1,284 @@
+# Decisões e continuidade
+
+Protocolo, registro de decisões, instruções de retomada e histórico do documento.
+
+> Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.
+
+## 2. Protocolo obrigatório de continuidade
+
+O agente responsável pelo projeto deve atuar primeiro como **Arquiteto de Software Sênior e Tech Lead**.
+
+### Ordem obrigatória
+
+1. compreender o problema;
+2. concluir as regras de negócio;
+3. discutir e comparar tecnologias;
+4. propor a arquitetura técnica detalhada;
+5. definir estrutura do projeto e modelo de dados;
+6. preparar roadmap, testes e critérios de aceite;
+7. solicitar aprovação explícita;
+8. implementar somente após aprovação.
+
+Discussão ou planejamento não autorizam implementação.
+
+Antes da aprovação explícita da implementação, não se deve:
+
+- escrever código;
+- criar a estrutura do software;
+- instalar dependências;
+- modificar banco de dados;
+- iniciar infraestrutura;
+- escolher tecnologias como decisão definitiva sem discussão;
+- alterar uma decisão arquitetural aprovada sem explicar o impacto e receber nova aprovação.
+
+Este documento foi criado por autorização expressa do usuário para permitir a continuidade do projeto em outro computador. Essa autorização não inclui implementação de código.
+
+---
+
+
+## 39. Registro resumido das decisões
+
+| Decisão | Estado |
+|---|---|
+| Documentação fragmentada por categorias, com índice central | APROVADO |
+| Regras de negócio antes das tecnologias | APROVADO |
+| Frontend online | APROVADO |
+| Arquitetura híbrida | APROVADO |
+| Agente envia binário diretamente ao Drive | APROVADO |
+| n8n orquestra sem transportar arquivos grandes | APROVADO |
+| PostgreSQL armazena metadados, estados e auditoria | APROVADO |
+| Organização por Cliente/Projeto/Ano/Mês/Dia | APROVADO |
+| Data da câmera, com fallback do sistema de arquivos | APROVADO |
+| Prévia obrigatória | APROVADO |
+| Nunca apagar arquivos físicos | APROVADO |
+| Upload retomável e verificação de integridade | APROVADO |
+| Várias empresas, usuários e máquinas | APROVADO |
+| Papéis Proprietário e Administrador | APROVADO |
+| Uma conta pode participar de várias empresas | APROVADO |
+| Cadastro público de conta e empresa | APROVADO |
+| Sem aprovação prévia de máquina | APROVADO |
+| Login obrigatório antes de qualquer operação | APROVADO |
+| Uma sessão por usuário | APROVADO |
+| Sessão válida até logout ou revogação | APROVADO |
+| Sem autenticação em dois fatores nesta fase | APROVADO |
+| Administrador acessa somente projetos permitidos | APROVADO |
+| Proprietário acessa todos os projetos | APROVADO |
+| Administrador pode enviar à lixeira | APROVADO |
+| Somente Proprietário pode restaurar | APROVADO |
+| Substituição por Administrador exige aprovação em até 48 horas | APROVADO |
+| Auditoria funcional permanente e exclusiva dos Proprietários | APROVADO |
+| Alertas internos e por e-mail para Proprietários | APROVADO |
+| Alterações externas sincronizam o catálogo | APROVADO |
+| Tags genéricas e personalizadas | APROVADO |
+| Tags, descrições e observações somente no catálogo | APROVADO |
+| Download individual, em lote, estruturado ou ZIP | APROVADO |
+| Regras de negócio complementares | APROVADO |
+| Frontend React, TypeScript e Vite | APROVADO |
+| Backend Python e Django | APROVADO |
+| Agente local Python e PySide6 | APROVADO |
+| PostgreSQL, Redis, Celery e Channels | APROVADO |
+| Keycloak via OpenID Connect | APROVADO |
+| Clean Architecture, Clean Code e SOLID | APROVADO |
+| Uma classe por arquivo | APROVADO |
+| Autenticação com Keycloak, OIDC e PKCE | APROVADO |
+| Comunicação segura agente–backend | APROVADO |
+| Google Workspace e Drive Compartilhado | APROVADO |
+| Escopo OAuth `drive.file` | APROVADO |
+| Gerenciar somente arquivos enviados pela aplicação | APROVADO |
+| Arquivos acima de 5 TB como `NAO_SUPORTADO_PELO_DRIVE` | APROVADO |
+| Integração OAuth e upload retomável no Drive | APROVADO |
+| Uma produtora na fase inicial | APROVADO |
+| Comercialização futura para outras produtoras | PLANEJADO |
+| Desenvolvimento inicial sem serviços pagos obrigatórios | APROVADO |
+| n8n Community somente para uso interno inicial | APROVADO |
+| Adaptadores substituíveis para n8n e Drive | APROVADO |
+| Drive pessoal pago para integração em pasta isolada | APROVADO |
+| Validação futura em Drive Compartilhado | PENDENTE |
+| Responsabilidades e contratos do n8n | APROVADO |
+| Filas, retomada, concorrência e idempotência | APROVADO |
+| Modelo de dados PostgreSQL | APROVADO |
+| Contratos de API e tratamento de erros | APROVADO |
+| Monorepo para backend, agente, frontend, contratos e infraestrutura | APROVADO |
+| Backend como monólito modular Django | APROVADO |
+| Organização por domínio funcional e depois por camada | APROVADO |
+| Comunicação entre módulos por casos de uso, contratos ou eventos | APROVADO |
+| Proibição de acesso direto ao ORM de outro módulo | APROVADO |
+| Estrutura do repositório e módulos | APROVADO |
+| Dados PostgreSQL externos ao ciclo de vida dos containers | APROVADO |
+| Volume persistente estável e obrigatório por ambiente | APROVADO |
+| Bloqueio da implantação quando o volume esperado estiver ausente | APROVADO |
+| Migrations pelo padrão expandir, migrar e contrair | APROVADO |
+| Backup anterior a mudanças críticas | APROVADO |
+| Restauração controlada, nunca sobre banco existente automaticamente | APROVADO |
+| Backup físico e WAL/PITR para produção comercial futura | PLANEJADO |
+| Demais detalhes da arquitetura técnica | PENDENTE |
+| Implementação incremental | AUTORIZADA EM 01/08/2026 |
+
+---
+
+
+## 40. Instrução para outra IA ou novo responsável
+
+Ao retomar este projeto:
+
+1. leia o índice principal, o estado e apenas os blocos relacionados à tarefa;
+2. não reinicie a descoberta já registrada;
+3. trate decisões marcadas como APROVADO como requisitos vigentes;
+4. não altere essas decisões sem explicar impacto e receber aprovação;
+5. considere concluídas as regras de negócio da seção 37;
+6. considere aprovada a stack registrada na seção 35;
+7. considere aprovadas a autenticação e a comunicação agente–backend registradas na seção 35;
+8. considere aprovada a integração com o Drive registrada nas seções 22 e 35;
+9. considere aprovadas as responsabilidades e contratos do n8n registrados na seção 35;
+10. considere aprovadas as regras de filas, retomada, concorrência e idempotência da seção 35;
+11. considere aprovado o modelo de dados PostgreSQL registrado na seção 35;
+12. considere aprovados os contratos de API registrados na seção 35;
+13. considere aprovada a estrutura de monorepo, módulos e dependências entre camadas;
+14. considere aprovadas a persistência, a esteira de atualização, as migrations seguras e a recuperação;
+15. continue pela composição Docker, exposição de rede, hospedagem e observabilidade;
+16. documente cada decisão no bloco temático correspondente e neste registro;
+17. mantenha o estado, a próxima etapa e o histórico atualizados;
+18. não escreva código nem crie estrutura de implementação antes de aprovação explícita.
+
+---
+
+
+## 41. Histórico do documento
+
+### 1º de agosto de 2026 — versão 0.15
+
+- autorizado o início da implementação incremental;
+- confirmado o uso de Daphne como servidor ASGI;
+- determinado o uso de containers Docker para os ambientes necessários;
+- implementada e validada a base Docker com Django, PostgreSQL e Redis;
+- comprovada a persistência dos dados após recriação do container PostgreSQL;
+- Git e GitHub permanecem sob responsabilidade exclusiva do proprietário.
+
+### 1º de agosto de 2026 — versão 0.14
+
+- aprovado que dados PostgreSQL permaneçam fora do ciclo de vida dos containers;
+- definidos volumes persistentes estáveis e validação obrigatória antes da implantação;
+- proibida a criação silenciosa de banco vazio em ambientes persistentes;
+- aprovada a esteira de atualização com backup, migration única e verificações de saúde;
+- aprovado o padrão de migrations `expandir → migrar → contrair`;
+- separadas reversão da aplicação e recuperação dos dados;
+- aprovada a política inicial de backup, restauração testada, RPO e RTO do piloto;
+- planejados backup físico, WAL/PITR e réplica para a produção comercial;
+- implementação do software permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.13
+
+- documentação fragmentada por categorias, com índice central e monólito v0.12 preservado;
+- aprovado o monorepo para backend, agente, frontend, contratos, automações e infraestrutura;
+- aprovado o backend como monólito modular Django;
+- definidos os módulos iniciais do backend, agente e frontend;
+- aprovadas as regras de dependência entre domínio, aplicação, adaptadores e infraestrutura;
+- proibidos acesso direto ao ORM de outro módulo e compartilhamento de modelos de persistência;
+- definida como próxima etapa a arquitetura de infraestrutura, ambientes e observabilidade;
+- criação do esqueleto e implementação do software permanecem não autorizadas.
+
+### 31 de julho de 2026 — versão 0.12
+
+- aprovados os contratos REST e OpenAPI 3.1;
+- definidos namespaces públicos, internos, de agente e webhooks;
+- aprovados padrões de idempotência, concorrência e operações assíncronas;
+- padronizados erros com `application/problem+json` e códigos estáveis;
+- iniciada a discussão da estrutura do repositório e módulos;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.11
+
+- aprovado o modelo conceitual PostgreSQL;
+- definidos isolamento multiempresa, RLS, UUIDs e controle de versão;
+- separados arquivo lógico, versões físicas e objetos do Drive;
+- definidas tabelas conceituais de domínio, integração, notificações e auditoria;
+- iniciada a discussão dos contratos de API e tratamento de erros;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.10
+
+- aprovadas as fontes de verdade central, local e externa;
+- aprovados os padrões outbox, inbox e entrega idempotente;
+- definidas regras de concorrência, concessão de tarefas e checkpoints;
+- definidas as filas Celery e os critérios de confiabilidade;
+- iniciada a discussão do modelo de dados PostgreSQL;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.9
+
+- aprovadas as responsabilidades permitidas e proibidas do n8n;
+- definidos os workflows iniciais e os contratos de integração com Django;
+- mantido o n8n fora das decisões e transações do domínio;
+- iniciada a discussão de filas, retomada, concorrência e idempotência;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.8
+
+- registrada a disponibilidade de um Drive pessoal pago para testes de integração;
+- limitada a integração a uma pasta isolada e a arquivos criados pela aplicação;
+- mantida como pendente a validação específica em Drive Compartilhado;
+- confirmado o uso interno do n8n Community sem licença paga nesta fase;
+- substituído MinIO obrigatório por adaptador local de sistema de arquivos, com S3 compatível opcional;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.7
+
+- definido uso inicial por uma única produtora e comercialização futura;
+- determinado que o desenvolvimento não dependerá de serviços ou licenças pagas;
+- limitado o n8n Community ao uso interno inicial;
+- definidos adaptadores substituíveis para n8n e Google Drive;
+- estabelecida revisão obrigatória de licenças antes da primeira produtora externa;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.6
+
+- aprovados Google Workspace e Drive Compartilhado como armazenamento principal;
+- aprovado o escopo OAuth `drive.file`;
+- limitado o gerenciamento aos arquivos enviados pela aplicação;
+- definido `NAO_SUPORTADO_PELO_DRIVE` para arquivos acima de 5 TB;
+- aprovado o fluxo retomável direto entre agente e Drive;
+- iniciada a discussão das responsabilidades e contratos do n8n;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.5
+
+- aprovada a autenticação do frontend e agente por Keycloak, OpenID Connect e PKCE;
+- aprovada a exigência de navegador externo para login do agente;
+- aprovada a comunicação de saída por HTTPS e WebSocket seguro;
+- definidos comandos persistentes, confirmações e idempotência;
+- iniciada a discussão da integração OAuth e do upload retomável do Drive;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.4
+
+- adotados Clean Architecture, Clean Code e princípios SOLID em todo o projeto;
+- definida a separação entre domínio, aplicação, adaptadores e infraestrutura;
+- estabelecida a regra de uma classe por arquivo, com exceção de código gerado, migrations e configuração declarativa;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.3
+
+- aprovada a stack Python para backend e agente local;
+- selecionados Django, Django REST Framework, PostgreSQL, Redis, Celery, Channels e Keycloak para o backend;
+- selecionados Python, PySide6 e SQLite para o agente local;
+- mantidos React, TypeScript e Vite no frontend;
+- iniciada a arquitetura de autenticação e comunicação agente–backend;
+- definido que o agente exigirá nova autenticação após todo reinício do computador;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.2
+
+- concluídas e aprovadas as regras de negócio pendentes da seção 37;
+- detalhadas regras de empresa, usuários, projetos, catálogo, upload, notificações, downloads e conformidade;
+- iniciada a fase de comparação e seleção de tecnologias;
+- implementação permanece não autorizada.
+
+### 31 de julho de 2026 — versão 0.1
+
+- criado o documento mestre único;
+- consolidadas as decisões das conversas de descoberta;
+- registrada a arquitetura funcional híbrida;
+- registradas regras de empresas, usuários, organização, upload, catálogo, Drive, download, lixeira, logs e alertas;
+- registradas as pendências para a próxima conversa;
+- implementação permanece não autorizada.
+
