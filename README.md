@@ -4,9 +4,12 @@ Plataforma para organização local, catalogação, upload retomável e gestão 
 
 ## Estado
 
-O projeto está na fase inicial de implementação. A arquitetura, as regras de negócio e as decisões vigentes estão documentadas; os módulos serão construídos incrementalmente.
+O MVP está em implementação. As Fases 0 e 1 estão validadas; as Fases 2 e 3 estão
+implementadas e aguardam validação funcional no ambiente oficial; a Fase 4 —
+organização local segura — é a próxima implementação planejada.
 
-Comece por [PROJETO_AUDIOVISUAL.md](PROJETO_AUDIOVISUAL.md).
+Para retomar o desenvolvimento, comece por [Continuidade do MVP](docs/04-entrega/continuidade-mvp.md)
+e depois consulte o [índice arquitetural](PROJETO_AUDIOVISUAL.md).
 
 ## Stack aprovada
 

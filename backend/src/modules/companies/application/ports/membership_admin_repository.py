@@ -6,6 +6,10 @@ from modules.companies.application.dto.membership_snapshot import MembershipSnap
 
 class MembershipAdminRepository(ABC):
     @abstractmethod
+    def list_for_company(self, company_id: UUID) -> list[MembershipSnapshot]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_for_update(self, company_id: UUID, membership_id: UUID) -> MembershipSnapshot | None:
         raise NotImplementedError
 

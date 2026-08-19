@@ -24,3 +24,11 @@ class PendingInvitationNotFoundError(Exception):
 
 class ActiveMemberAlreadyExistsError(Exception):
     pass
+
+
+class CompanyAccessDeniedError(Exception):
+    pass
+
+
+class OwnerRequiredError(Exception):
+    pass

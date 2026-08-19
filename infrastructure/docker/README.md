@@ -35,6 +35,10 @@ docker compose --env-file .env.dev -f compose.dev.yaml --profile automation up -
 - Keycloak, quando ativado: `http://127.0.0.1:8080`;
 - n8n, quando ativado: `http://127.0.0.1:5678`.
 
+Na primeira inicialização, o Keycloak importa o realm `legado` e os clientes públicos
+`legado-agent` (Authorization Code com PKCE S256) e `legado-api`. O cadastro local de
+conta fica disponível na tela de login. A importação não substitui um realm já existente.
+
 ## Persistência
 
 PostgreSQL usa o volume externo e estável `legado_postgres_data`. Recriar containers não remove os dados. Se o volume não existir, o ambiente é bloqueado em vez de criar silenciosamente um banco vazio. Não execute `docker compose down -v`, `docker volume prune` nem remova esse volume.

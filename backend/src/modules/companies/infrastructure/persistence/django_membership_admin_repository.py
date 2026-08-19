@@ -10,6 +10,14 @@ from modules.companies.infrastructure.persistence.models.membership_model import
 
 
 class DjangoMembershipAdminRepository(MembershipAdminRepository):
+    def list_for_company(self, company_id: UUID) -> list[MembershipSnapshot]:
+        return [
+            self._snapshot(model)
+            for model in MembershipModel.objects.filter(company_id=company_id).order_by(
+                "created_at", "id"
+            )
+        ]
+
     def get_for_update(self, company_id: UUID, membership_id: UUID) -> MembershipSnapshot | None:
         model = (
             MembershipModel.objects.select_for_update()

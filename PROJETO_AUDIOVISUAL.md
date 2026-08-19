@@ -7,6 +7,9 @@
 - Regras de negócio, stack, autenticação, comunicação, Drive, n8n, filas, modelo de dados e contratos de API: **aprovados**.
 - Monorepo, módulos e dependências entre camadas: **aprovados**.
 - Implementação do software: **iniciada e autorizada em 1º de agosto de 2026**.
+- Fases 0 e 1 do MVP: **validadas**.
+- Fases 2 e 3 do MVP: **implementadas e aguardando validação funcional**.
+- Próxima implementação: **Fase 4 — organização local segura**.
 - Documento original: [monólito v0.12 preservado](docs/arquivo/PROJETO_AUDIOVISUAL_MONOLITO_v0.12.md).
 
 ## Leitura rápida
@@ -44,6 +47,9 @@
 
 ### Entrega e continuidade
 
+- [Continuidade operacional do MVP](docs/04-entrega/continuidade-mvp.md)
+- [Roadmap do MVP](docs/04-entrega/roadmap-mvp.md)
+- [Checklist do MVP](docs/04-entrega/checklist-mvp.md)
 - [Estado e roadmap](docs/04-entrega/roadmap.md)
 - [Estado detalhado da implementação](docs/04-entrega/estado-implementacao.md)
 - [Plano de testes](docs/04-entrega/plano-testes.md)
@@ -53,7 +59,7 @@
 
 ## Regra para IA ou novo responsável
 
-1. Comece por este índice e pelo [estado e roadmap](docs/04-entrega/roadmap.md).
+1. Comece pela [continuidade do MVP](docs/04-entrega/continuidade-mvp.md) e por este índice.
 2. Abra apenas os documentos ligados à atividade atual.
 3. Decisões marcadas como aprovadas são requisitos vigentes.
 4. Não altere decisões arquiteturais sem explicar o impacto e obter aprovação.
@@ -62,4 +68,6 @@
 
 ## Próxima etapa
 
-Evoluir o esqueleto validado do backend para os primeiros módulos de domínio. O ambiente Docker de desenvolvimento, Django com Daphne, PostgreSQL e Redis já estão executáveis; hospedagem, observabilidade e recuperação automatizada permanecem pendentes.
+Fechar os ensaios funcionais das Fases 2 e 3 e arquitetar a Fase 4. A próxima
+implementação deve adicionar confirmação explícita, resolução de conflitos,
+checkpoints e movimentação local sem exclusão ou sobrescrita.

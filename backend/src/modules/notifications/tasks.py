@@ -1,20 +1,31 @@
 from celery import shared_task
-from django.conf import settings
-from django.core.mail import send_mail
+
+from modules.notifications.application.dto.send_invitation_email_command import (
+    SendInvitationEmailCommand,
+)
+from modules.notifications.application.use_cases.send_invitation_email_use_case import (
+    SendInvitationEmailUseCase,
+)
+from modules.notifications.infrastructure.email.django_email_sender import DjangoEmailSender
+from modules.notifications.infrastructure.persistence.django_delivery_recorder import (
+    DjangoDeliveryRecorder,
+)
 
 
 @shared_task(
+    bind=True,
     autoretry_for=(Exception,),
     retry_backoff=True,
     retry_jitter=True,
     max_retries=5,
 )
-def send_company_invitation_email(email: str, company_name: str, token: str) -> None:
-    invitation_url = f"{settings.INVITATION_PUBLIC_URL}?token={token}"
-    send_mail(
-        subject=f"Convite para participar de {company_name}",
-        message=f"Use este link para aceitar o convite: {invitation_url}",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=False,
+def send_company_invitation_email(self, email: str, company_name: str, token: str) -> None:
+    SendInvitationEmailUseCase(DjangoEmailSender(), DjangoDeliveryRecorder()).execute(
+        SendInvitationEmailCommand(
+            email=email,
+            company_name=company_name,
+            token=token,
+            task_id=self.request.id or "direct-call",
+            attempt_number=self.request.retries + 1,
+        )
     )
