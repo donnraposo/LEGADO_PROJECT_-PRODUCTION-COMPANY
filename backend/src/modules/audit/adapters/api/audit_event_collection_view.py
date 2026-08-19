@@ -1,14 +1,16 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from modules.audit.infrastructure.persistence.models.audit_event_model import AuditEventModel
+from modules.audit.application.dto.audit_event_summary import AuditEventSummary
+from modules.audit.application.use_cases.list_audit_events_use_case import ListAuditEventsUseCase
+from modules.audit.infrastructure.persistence.django_audit_event_query import DjangoAuditEventQuery
 from modules.companies.adapters.api.company_context import require_owner
 
 
 class AuditEventCollectionView(APIView):
     def get(self, request) -> Response:
         owner = require_owner(request)
-        events = AuditEventModel.objects.filter(company_id=owner.company_id)[:100]
+        events = ListAuditEventsUseCase(DjangoAuditEventQuery()).execute(owner.company_id)
         return Response(
             {
                 "items": [self._serialize(event) for event in events],
@@ -17,7 +19,7 @@ class AuditEventCollectionView(APIView):
         )
 
     @staticmethod
-    def _serialize(event: AuditEventModel) -> dict[str, object]:
+    def _serialize(event: AuditEventSummary) -> dict[str, object]:
         return {
             "id": str(event.id),
             "actor_user_id": str(event.actor_user_id),

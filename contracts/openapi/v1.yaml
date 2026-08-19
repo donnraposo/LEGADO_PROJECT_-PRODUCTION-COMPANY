@@ -5,6 +5,8 @@ info:
   description: Contrato inicial da API central da plataforma LEGADO.
 servers:
   - url: /
+security:
+  - keycloak: []
 paths:
   /api/v1/audit-events:
     get:
@@ -157,6 +159,379 @@ paths:
       responses:
         "201":
           description: Projeto criado
+  /api/v1/media-files:
+    get:
+      operationId: listMediaFiles
+      summary: Lista arquivos do catálogo acessíveis na empresa selecionada
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: q
+          in: query
+          schema: {type: string, maxLength: 200}
+        - name: project_id
+          in: query
+          schema: {type: string, format: uuid}
+        - name: status
+          in: query
+          schema: {type: string, maxLength: 40}
+        - name: tag_id
+          in: query
+          schema: {type: string, format: uuid}
+        - name: extension
+          in: query
+          schema: {type: string, maxLength: 32}
+        - name: media_type
+          in: query
+          schema: {type: string, maxLength: 120}
+        - name: min_size_bytes
+          in: query
+          schema: {type: integer, minimum: 0}
+        - name: max_size_bytes
+          in: query
+          schema: {type: integer, minimum: 0}
+        - name: recorded_from
+          in: query
+          schema: {type: string, format: date-time}
+        - name: recorded_to
+          in: query
+          schema: {type: string, format: date-time}
+        - name: created_by_user_id
+          in: query
+          schema: {type: string, format: uuid}
+        - name: cursor
+          in: query
+          schema: {type: string, maxLength: 64}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      responses:
+        "200":
+          description: Arquivos acessíveis do catálogo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFileCollection"
+    post:
+      operationId: createMediaFile
+      summary: Registra um arquivo lógico e sua primeira versão física
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMediaFile"
+      responses:
+        "201":
+          description: Arquivo registrado no catálogo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/media-files/{media_file_id}:
+    patch:
+      operationId: updateMediaFileMetadata
+      summary: Altera metadados funcionais com concorrência otimista
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: media_file_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMediaMetadata"
+      responses:
+        "200":
+          description: Metadados atualizados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "409":
+          description: Versão desatualizada
+  /api/v1/media-files/{media_file_id}/metadata-history:
+    get:
+      operationId: listMediaMetadataHistory
+      summary: Lista as versões funcionais de metadados acessíveis
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: media_file_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: after_version
+          in: query
+          schema: {type: integer, minimum: 0, default: 0}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      responses:
+        "200":
+          description: Histórico funcional do arquivo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataVersionCollection"
+        "404": {description: Arquivo não encontrado no contexto autorizado}
+  /api/v1/media-files/{media_file_id}/metadata-history/{version}/restore:
+    post:
+      operationId: restoreMediaMetadata
+      summary: Restaura metadados como nova versão por um Proprietário
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: media_file_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: version
+          in: path
+          required: true
+          schema: {type: integer, minimum: 1}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreMetadata"
+      responses:
+        "200":
+          description: Metadados restaurados ou já equivalentes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "403": {description: Papel sem permissão para restaurar}
+        "404": {description: Arquivo ou versão não encontrado}
+        "409": {description: Versão atual desatualizada}
+  /api/v1/tags:
+    get:
+      operationId: listTags
+      summary: Lista tags genéricas e personalizadas disponíveis na empresa
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Tags disponíveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagCollection"
+    post:
+      operationId: createCustomTag
+      summary: Cria uma tag personalizada como Proprietário
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTag"
+      responses:
+        "201":
+          description: Tag personalizada criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "403":
+          description: Papel sem permissão para gerenciar tags
+  /api/v1/tags/{tag_id}:
+    delete:
+      operationId: archiveCustomTag
+      summary: Arquiva uma tag personalizada como Proprietário
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Tag arquivada
+        "404":
+          description: Tag personalizada não encontrada
+  /api/v1/media-files/{media_file_id}/tags/{tag_id}:
+    parameters:
+      - $ref: "#/components/parameters/CompanyId"
+      - name: media_file_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: tag_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    put:
+      operationId: assignMediaFileTag
+      summary: Aplica uma tag a um arquivo acessível
+      responses:
+        "204": {description: Tag aplicada}
+        "404": {description: Arquivo ou tag não encontrado}
+    delete:
+      operationId: removeMediaFileTag
+      summary: Remove uma tag de um arquivo acessível
+      responses:
+        "204": {description: Tag removida}
+        "404": {description: Arquivo não encontrado}
+  /api/v1/agent/machines/heartbeat:
+    post:
+      operationId: recordMachineHeartbeat
+      summary: Registra a máquina ou renova sua presença autenticada
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MachineHeartbeat"
+      responses:
+        "200":
+          description: Presença registrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Machine"
+  /api/v1/agent/media-files:
+    post:
+      operationId: ingestAgentMediaFile
+      summary: Registra de forma idempotente um arquivo organizado pelo agente
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestAgentMediaFile"
+      responses:
+        "200":
+          description: Ingestão existente devolvida sem duplicação
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "201":
+          description: Arquivo registrado no catálogo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404": {description: Máquina não encontrada no contexto autorizado}
+        "409": {description: Identificador de ingestão usado com outros dados}
+  /api/v1/agent/media-files/{media_file_id}/state:
+    patch:
+      operationId: reconcileMediaFileState
+      summary: Reconcilia uma transição técnica confirmada pelo agente local
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: media_file_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReconcileMediaFileState"
+      responses:
+        "200":
+          description: Estado atual do arquivo, inclusive em repetição idempotente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFile"
+        "400": {description: Transição técnica inválida}
+        "404": {description: Arquivo ou máquina não encontrado no contexto autorizado}
+        "409": {description: Versão do arquivo desatualizada}
+  /api/v1/agent/commands:
+    post:
+      operationId: createAgentCommand
+      summary: Persiste um comando idempotente destinado a uma máquina
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgentCommand"
+      responses:
+        "201":
+          description: Comando criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCommand"
+        "200":
+          description: Comando idempotente já existente
+        "409":
+          description: Chave reutilizada com conteúdo diferente
+  /api/v1/agent/commands/{command_id}:
+    patch:
+      operationId: updateAgentCommandState
+      summary: Confirma recebimento, progresso ou resultado do comando
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: command_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAgentCommandState"
+      responses:
+        "200":
+          description: Estado atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCommand"
+        "400": {description: Transição inválida}
+        "409": {description: Versão do comando desatualizada}
+  /api/v1/agent/machines/{machine_id}/commands:
+    get:
+      operationId: listMachineCommands
+      summary: Lista comandos persistidos pendentes da máquina
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: machine_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: after_sequence
+          in: query
+          schema: {type: integer, minimum: 0, default: 0}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      responses:
+        "200":
+          description: Comandos ainda executáveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCommandCollection"
+        "404":
+          description: Máquina não encontrada na empresa
   /health/live:
     get:
       operationId: getLiveHealth
@@ -266,6 +641,312 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    CreateMediaFile:
+      type: object
+      additionalProperties: false
+      required:
+        - project_id
+        - original_name
+        - size_bytes
+        - checksum_algorithm
+        - checksum_digest
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        original_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        media_type:
+          type: string
+          maxLength: 120
+        size_bytes:
+          type: integer
+          minimum: 0
+        checksum_algorithm:
+          type: string
+          maxLength: 24
+        checksum_digest:
+          type: string
+          maxLength: 128
+        recorded_at:
+          type: [string, "null"]
+          format: date-time
+    IngestAgentMediaFile:
+      type: object
+      additionalProperties: false
+      required:
+        - project_id
+        - machine_id
+        - ingestion_id
+        - original_name
+        - size_bytes
+        - checksum_algorithm
+        - checksum_digest
+      properties:
+        project_id: {type: string, format: uuid}
+        machine_id: {type: string, format: uuid}
+        ingestion_id: {type: string, format: uuid}
+        original_name: {type: string, minLength: 1, maxLength: 255}
+        media_type: {type: string, maxLength: 120}
+        size_bytes: {type: integer, minimum: 0}
+        checksum_algorithm: {type: string, maxLength: 24}
+        checksum_digest: {type: string, maxLength: 128}
+        recorded_at: {type: [string, "null"], format: date-time}
+    MediaFileCollection:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFile"
+        next_cursor:
+          type: [string, "null"]
+    UpdateMediaMetadata:
+      type: object
+      additionalProperties: false
+      required: [expected_version]
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        observations:
+          type: string
+        recorded_at:
+          type: [string, "null"]
+          format: date-time
+    MediaFile:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - project_id
+        - original_name
+        - display_name
+        - media_type
+        - description
+        - observations
+        - size_bytes
+        - checksum
+        - recorded_at
+        - status
+        - version
+        - tags
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        original_name:
+          type: string
+        display_name:
+          type: string
+        media_type:
+          type: string
+        description:
+          type: string
+        observations:
+          type: string
+        size_bytes:
+          type: integer
+          minimum: 0
+        checksum:
+          type: object
+          additionalProperties: false
+          required: [algorithm, digest]
+          properties:
+            algorithm:
+              type: string
+            digest:
+              type: string
+        recorded_at:
+          type: [string, "null"]
+          format: date-time
+        status:
+          type: string
+          enum:
+            - DESCOBERTO
+            - ANALISADO
+            - AGUARDANDO_CONFIRMACAO
+            - ORGANIZANDO
+            - ORGANIZADO
+            - AGUARDANDO_UPLOAD
+            - ENVIANDO
+            - VERIFICANDO
+            - SINCRONIZADO
+            - CONFLITO
+            - INTERROMPIDO
+            - AGUARDANDO_INTERNET
+            - DISPOSITIVO_DESCONECTADO
+            - FALHA_DE_INTEGRIDADE
+            - AGUARDANDO_INTERVENCAO
+            - CANCELADO
+        version:
+          type: integer
+          minimum: 1
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+    RestoreMetadata:
+      type: object
+      additionalProperties: false
+      required: [expected_version]
+      properties:
+        expected_version: {type: integer, minimum: 1}
+    MetadataVersionCollection:
+      type: object
+      additionalProperties: false
+      required: [items, next_version]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataVersion"
+        next_version:
+          type: [integer, "null"]
+          minimum: 1
+    MetadataVersion:
+      type: object
+      additionalProperties: false
+      required: [version, actor_user_id, snapshot, created_at]
+      properties:
+        version: {type: integer, minimum: 1}
+        actor_user_id: {type: string, format: uuid}
+        snapshot: {type: object}
+        created_at: {type: string, format: date-time}
+    ReconcileMediaFileState:
+      type: object
+      additionalProperties: false
+      required: [machine_id, expected_version, status]
+      properties:
+        machine_id: {type: string, format: uuid}
+        expected_version: {type: integer, minimum: 1}
+        status:
+          $ref: "#/components/schemas/MediaFile/properties/status"
+    CreateTag:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 80}
+    Tag:
+      type: object
+      additionalProperties: false
+      required: [id, name, is_system]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        is_system: {type: boolean}
+    TagCollection:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+    MachineHeartbeat:
+      type: object
+      additionalProperties: false
+      required: [installation_id, display_name, os_family, agent_version]
+      properties:
+        installation_id: {type: string, format: uuid}
+        display_name: {type: string, minLength: 1, maxLength: 120}
+        os_family: {type: string, enum: [WINDOWS, MACOS]}
+        agent_version: {type: string, minLength: 1, maxLength: 40}
+    Machine:
+      type: object
+      additionalProperties: false
+      required:
+        [id, installation_id, display_name, os_family, agent_version, status, last_seen_at]
+      properties:
+        id: {type: string, format: uuid}
+        installation_id: {type: string, format: uuid}
+        display_name: {type: string}
+        os_family: {type: string}
+        agent_version: {type: string}
+        status: {type: string, enum: [ONLINE, OFFLINE]}
+        last_seen_at: {type: string, format: date-time}
+    CreateAgentCommand:
+      type: object
+      additionalProperties: false
+      required:
+        [machine_id, command_type, resource_type, payload, idempotency_key]
+      properties:
+        machine_id: {type: string, format: uuid}
+        command_type: {type: string, minLength: 1, maxLength: 60}
+        resource_type: {type: string, minLength: 1, maxLength: 60}
+        resource_id: {type: [string, "null"], format: uuid}
+        payload: {type: object}
+        idempotency_key: {type: string, minLength: 8, maxLength: 120}
+    AgentCommand:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - machine_id
+        - command_type
+        - resource_type
+        - resource_id
+        - payload
+        - sequence
+        - correlation_id
+        - status
+        - progress_percent
+        - result
+        - failure_code
+        - version
+      properties:
+        id: {type: string, format: uuid}
+        machine_id: {type: string, format: uuid}
+        command_type: {type: string}
+        resource_type: {type: string}
+        resource_id: {type: [string, "null"], format: uuid}
+        payload: {type: object}
+        sequence: {type: integer, minimum: 1}
+        correlation_id: {type: string, format: uuid}
+        status:
+          type: string
+          enum: [PENDING, ACKNOWLEDGED, RUNNING, SUCCEEDED, FAILED, CANCELLED]
+        progress_percent: {type: integer, minimum: 0, maximum: 100}
+        result: {type: object}
+        failure_code: {type: string}
+        version: {type: integer, minimum: 1}
+    UpdateAgentCommandState:
+      type: object
+      additionalProperties: false
+      required: [machine_id, expected_version, status]
+      properties:
+        machine_id: {type: string, format: uuid}
+        expected_version: {type: integer, minimum: 1}
+        status:
+          type: string
+          enum: [ACKNOWLEDGED, RUNNING, SUCCEEDED, FAILED, CANCELLED]
+        progress_percent: {type: integer, minimum: 0, maximum: 100, default: 0}
+        result: {type: object}
+        failure_code: {type: string, maxLength: 80}
+    AgentCommandCollection:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentCommand"
     AuditEventCollection:
       type: object
       additionalProperties: false

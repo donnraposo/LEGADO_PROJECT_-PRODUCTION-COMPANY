@@ -45,3 +45,21 @@ def test_invitation_http_adapters_do_not_import_persistence() -> None:
             if any(marker in name for name in imported for marker in forbidden):
                 violations.append(str(file.relative_to(source_root)))
     assert violations == []
+
+
+def test_http_adapters_do_not_import_orm_models_or_transactions() -> None:
+    source_root = Path(__file__).resolve().parents[2] / "src"
+    violations: list[str] = []
+    for file in (source_root / "modules").glob("*/adapters/api/*.py"):
+        tree = ast.parse(file.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            module = node.module if isinstance(node, ast.ImportFrom) else ""
+            names = [alias.name for alias in node.names] if isinstance(node, ast.Import) else []
+            imported = [module, *names]
+            if any(
+                marker in name
+                for name in imported
+                for marker in ("django.db", ".persistence.models")
+            ):
+                violations.append(str(file.relative_to(source_root)))
+    assert violations == []

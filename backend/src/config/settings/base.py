@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     "modules.projects.apps.ProjectsConfig",
     "modules.audit.apps.AuditConfig",
     "modules.notifications.apps.NotificationsConfig",
+    "modules.catalog.apps.CatalogConfig",
+    "modules.operations.apps.OperationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -145,3 +147,9 @@ INVITATION_PUBLIC_URL = os.environ.get(
     "INVITATION_PUBLIC_URL", "http://127.0.0.1:5173/invitations/accept"
 )
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@legado.local")
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "mailpit")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "1025"))
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))

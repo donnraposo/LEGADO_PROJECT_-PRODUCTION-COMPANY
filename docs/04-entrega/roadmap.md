@@ -1,6 +1,10 @@
 # Estado e roadmap
 
-**Atualizado em:** 1º de agosto de 2026.
+> A primeira entrega funcional agora é controlada pelo [Roadmap do MVP](roadmap-mvp.md) e pelo [Checklist do MVP](checklist-mvp.md). Este documento permanece como visão histórica e roadmap amplo do produto.
+
+> Para retomada por outra pessoa ou IA, use [Continuidade do MVP](continuidade-mvp.md).
+
+**Atualizado em:** 19 de agosto de 2026.
 
 ## Concluído e aprovado
 
@@ -35,6 +39,26 @@
 - concluída a migração do cancelamento de convites para caso de uso e portas.
 - concluída a migração de criação e listagem de convites para casos de uso e portas.
 - concluída a evolução dos eventos com nome, descrição e diferenças campo a campo.
+- concluída a retirada de ORM e transações dos adaptadores HTTP administrativos;
+- concluída a proteção da auditoria diretamente no PostgreSQL;
+- concluído o rastreamento de tentativas e resultados de e-mail;
+- validado o fluxo Django, Redis, Celery e Mailpit.
+
+### Próxima fatia funcional
+
+- iniciados catálogo audiovisual, metadados e versões físicas;
+- concluídos histórico de metadados e primeira entrega de tags;
+- concluídos busca, filtros e paginação inicial por cursor;
+- concluídos estados de disponibilidade, reconciliação e auditoria de tags;
+- iniciados registro de máquinas, presença e comandos persistidos idempotentes;
+- concluídos confirmação, progresso e resultado com concorrência otimista;
+- integrado o resultado de reconciliação ao estado técnico do catálogo;
+- concluído o esqueleto funcional do agente local com SQLite, OIDC/PKCE, presença e fila;
+- validar o agente ponta a ponta com Python 3.14 e Keycloak local;
+- implementadas análise, checksum, conflitos e prévia local recuperável;
+- validar a interface em Python 3.14 e arquitetar a organização local segura;
+- próxima implementação: confirmação, resolução de conflitos, checkpoints e movimentação sem sobrescrita;
+- frontend web permanece planejado após a organização local segura.
 
 Concluir a infraestrutura além da base local já validada:
 

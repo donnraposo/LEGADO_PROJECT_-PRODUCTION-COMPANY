@@ -113,6 +113,8 @@ Este documento foi criado por autorização expressa do usuário para permitir a
 | Backup físico e WAL/PITR para produção comercial futura | PLANEJADO |
 | Demais detalhes da arquitetura técnica | PENDENTE |
 | Implementação incremental | AUTORIZADA EM 01/08/2026 |
+| Movimentação local sem substituição e com checkpoint por arquivo | APROVADO |
+| Ingestão do agente idempotente e sem caminho local no backend | APROVADO |
 
 ---
 
@@ -144,6 +146,63 @@ Ao retomar este projeto:
 
 
 ## 41. Histórico do documento
+
+### 19 de agosto de 2026 — versão 0.30
+
+- implementado o núcleo da organização local segura da Fase 4;
+- destino passa a integrar a prévia e toda movimentação exige confirmação explícita;
+- adotados checkpoints SQLite, uma operação ativa e retomada sem repetição;
+- movimentação no mesmo volume não substitui; entre volumes copia em streaming,
+  verifica SHA-256 e somente depois remove a origem;
+- adotado identificador de ingestão local único para o catálogo central;
+- caminhos de origem e destino permanecem exclusivamente no agente;
+- abertura do frontend e validação funcional no Windows permanecem pendentes.
+
+### 19 de agosto de 2026 — versão 0.29
+
+- criada continuidade operacional única para retomada do MVP;
+- consolidados estados das Fases 0 a 8 e evidências de backend e agente;
+- registrado que alterações ainda não commitadas pertencem ao estado atual;
+- corrigidos índices e referências que ainda apontavam para o início do backend;
+- Fases 2 e 3 permanecem aguardando validação funcional no ambiente oficial;
+- Fase 4 confirmada como próxima arquitetura e implementação, sujeita a aprovação.
+
+### 19 de agosto de 2026 — versão 0.28
+
+- implementada análise local somente leitura com SHA-256 em streaming;
+- caminhos completos e prévias permanecem exclusivamente no SQLite do agente;
+- itens técnicos, temporários, links e junções são excluídos da varredura;
+- duplicidades por conteúdo e conflitos de destino são apresentados ao usuário;
+- prévia e seleção sobrevivem ao reinício, e cancelamento preserva itens concluídos;
+- movimentação física permanece proibida até a implementação confirmada da Fase 4.
+
+### 19 de agosto de 2026 — versão 0.27
+
+- implementado o agente local mínimo em Python/PySide6 com camadas separadas;
+- adotados SQLite migrável, instalação persistente e fila idempotente local;
+- implementados OIDC/PKCE no navegador, token em memória e novo login após encerramento;
+- polling passou a renovar presença e reportar confirmação, execução e resultado;
+- declarado realm Keycloak local com cliente público PKCE e audiência da API;
+- validação ponta a ponta real mantida pendente até preparar o ambiente local com Python 3.14.
+
+### 1º de agosto de 2026 — versão 0.26
+
+- iniciada a implementação do catálogo audiovisual;
+- arquivo lógico separado de versão física e objeto de armazenamento;
+- criação e listagem isoladas por empresa e projeto;
+- caminho local completo removido antes da persistência central;
+- alteração inicial de metadados protegida por concorrência otimista;
+- contrato OpenAPI e testes correspondentes adicionados.
+
+### 1º de agosto de 2026 — versão 0.25
+
+- concluída a consolidação dos adaptadores HTTP administrativos;
+- criação e listagem de clientes e projetos migradas para casos de uso e portas;
+- contexto empresarial, membros e consulta de auditoria retirados do ORM nas views;
+- auditoria protegida contra `UPDATE` e `DELETE` diretamente no PostgreSQL;
+- tentativas e resultados de e-mail persistidos com destinatário protegido por HMAC;
+- fluxo Django, Redis, Celery e Mailpit validado funcionalmente;
+- definido `D:\PROJETOS\LEGADO` como caminho definitivo do projeto.
 
 ### 1º de agosto de 2026 — versão 0.24
 

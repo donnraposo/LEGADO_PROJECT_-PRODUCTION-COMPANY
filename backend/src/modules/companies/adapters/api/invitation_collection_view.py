@@ -58,7 +58,7 @@ class InvitationCollectionView(APIView):
             ).execute(
                 CreateInvitationCommand(
                     company_id=membership.company_id,
-                    company_name=membership.company.name,
+                    company_name=membership.company_name,
                     actor_user_id=request.user.id,
                     email=serializer.validated_data["email"],
                     role=serializer.validated_data["role"],

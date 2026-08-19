@@ -1,6 +1,13 @@
 # Estado da implementação
 
+> Execução vigente: [Roadmap do MVP funcional](roadmap-mvp.md) e [Checklist do MVP](checklist-mvp.md).
+> Retomada operacional: [Continuidade do MVP](continuidade-mvp.md).
+
 **Estado:** EM IMPLEMENTAÇÃO desde 1º de agosto de 2026.
+
+**Última consolidação:** 19 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
+3 implementadas e aguardando validação funcional; núcleo da Fase 4 implementado e
+aguardando validação funcional, migration PostgreSQL e abertura do frontend.
 
 Registro operacional do software implementado, das validações executadas, das limitações conhecidas e do ponto obrigatório de continuidade.
 
@@ -18,6 +25,36 @@ Registro operacional do software implementado, das validações executadas, das 
 - endpoints de saúde e erros `application/problem+json`;
 - configurações sensíveis fornecidas por ambiente;
 - execução dos componentes de servidor em Docker.
+
+### Agente local
+
+**Estado:** IMPLEMENTADO — AGUARDA VALIDAÇÃO FUNCIONAL.
+
+- projeto Python 3.14 e PySide6 separado em domínio, aplicação, adaptadores e infraestrutura;
+- instalação identificada por UUID persistente e vínculo de máquina por empresa;
+- SQLite migrável com fila idempotente e sem senha, token ou credencial;
+- login OIDC Authorization Code com PKCE S256 no navegador e retorno em `localhost`;
+- token mantido somente na memória do processo e descartado no encerramento;
+- heartbeat renovado a cada consulta, polling incremental e retomada da fila local;
+- confirmação, execução, resultado de `PING` e falha explícita de comando não suportado;
+- interface inicial para login, empresa, presença e acompanhamento da fila;
+- realm local declarativo com clientes `legado-agent` e `legado-api`.
+
+### Análise e prévia local
+
+**Estado:** IMPLEMENTADO — AGUARDA VALIDAÇÃO FUNCIONAL.
+
+- seleção acumulável de arquivos e pastas pela interface;
+- varredura somente leitura sem seguir links ou junções;
+- lixeira, diretórios técnicos, arquivos temporários e itens do sistema ignorados;
+- nome, extensão, tipo MIME, tamanho, data e origem da data registrados localmente;
+- SHA-256 calculado em blocos de 4 MiB, sem carregar o arquivo inteiro em memória;
+- alteração de tamanho ou horário durante a leitura invalida o item;
+- duplicidade por checksum e conflito pelo destino relativo detectados;
+- destino previsto em `Cliente/Projeto/Ano/Mês/Dia`, com segmentos seguros para Windows;
+- prévia selecionável persistida e recuperável após reinício;
+- cancelamento entre arquivos preserva a prévia parcial;
+- nenhuma operação de mover, renomear, sobrescrever ou excluir foi adicionada.
 
 ### Persistência e desenvolvimento
 
@@ -40,7 +77,7 @@ Registro operacional do software implementado, das validações executadas, das 
 
 ### Empresas
 
-**Estado:** EM IMPLEMENTAÇÃO.
+**Estado:** IMPLEMENTAÇÃO INICIAL VALIDADA.
 
 - criação e listagem de empresas;
 - criação automática do vínculo de Proprietário;
@@ -64,7 +101,7 @@ Registro operacional do software implementado, das validações executadas, das 
 
 ### Clientes e projetos
 
-**Estado:** EM IMPLEMENTAÇÃO.
+**Estado:** IMPLEMENTAÇÃO INICIAL VALIDADA.
 
 - criação e listagem de clientes e projetos;
 - nome original e normalizado;
@@ -73,6 +110,8 @@ Registro operacional do software implementado, das validações executadas, das 
 - isolamento inicial entre empresas;
 - acesso automático do Administrador ao projeto criado por ele;
 - concessão e revogação de acesso por Proprietários.
+- criação e listagem isoladas em casos de uso, DTOs, portas e adaptadores de persistência;
+- views administrativas sem acesso direto ao ORM ou transações.
 
 ### Auditoria
 
@@ -90,13 +129,48 @@ Registro operacional do software implementado, das validações executadas, das 
 
 ### Notificações
 
-**Estado:** IMPLEMENTAÇÃO INICIAL PARCIAL.
+**Estado:** IMPLEMENTAÇÃO INICIAL VALIDADA.
 
 - envio de convite enfileirado por Celery;
 - adaptador de e-mail baseado no Django;
 - endereço público de aceite e remetente configuráveis;
 - política de repetição com atraso progressivo;
 - composição do e-mail validada com backend de teste em memória.
+- tentativas e resultados persistidos sem endereço aberto, token ou mensagem sensível;
+- estados de processamento, entrega e falha com número da tentativa e tarefa Celery;
+- fluxo real Django, Redis, Celery e Mailpit validado.
+
+### Catálogo audiovisual
+
+**Estado:** IMPLEMENTAÇÃO INICIAL PARCIAL VALIDADA.
+
+- arquivo lógico separado da primeira versão física e do objeto de armazenamento;
+- criação e listagem por casos de uso, portas e adaptadores;
+- tamanho e checksum persistidos na versão física;
+- caminho local completo removido antes da persistência central;
+- isolamento por empresa e acesso por projeto;
+- Proprietários visualizam todos os projetos e Administradores somente os atribuídos;
+- alteração inicial de metadados com concorrência otimista e conflito HTTP `409`;
+- histórico imutável de snapshots funcionais a cada versão de metadados;
+- tags genéricas pré-cadastradas e tags personalizadas isoladas por empresa;
+- criação e arquivamento de tags personalizadas restritos a Proprietários;
+- aplicação e remoção de tags limitadas aos projetos acessíveis;
+- busca textual e filtros por projeto, estado e tag;
+- paginação por cursor opaco, sem uso de deslocamento;
+- contrato inicial de criação, listagem e alteração disponível no OpenAPI.
+- estados técnicos oficiais e transições permitidas centralizados na aplicação;
+- reconciliação autenticada por empresa, usuário, máquina e projeto;
+- primeira máquina reconciliadora vinculada à versão física;
+- repetição do mesmo estado idempotente, sem nova versão ou auditoria;
+- transição com versão desatualizada rejeitada com HTTP `409`;
+- transição inválida rejeitada sem alterar o catálogo;
+- mudanças de estado registradas em auditoria imutável.
+- aplicação e remoção de tags idempotentes e auditadas;
+- tags incluídas nas respostas de criação, listagem, edição e reconciliação;
+- histórico de metadados paginado e isolado por empresa e projeto;
+- restauração de metadados como nova versão, restrita a Proprietários;
+- restauração concorrente protegida por `expected_version`;
+- filtros combináveis por extensão, tipo, tamanho, período e responsável.
 
 ## Contratos disponíveis
 
@@ -108,6 +182,12 @@ Registro operacional do software implementado, das validações executadas, das 
 - membros;
 - concessão e revogação de acesso a projetos;
 - consulta de auditoria.
+- heartbeat autenticado de máquinas;
+- criação idempotente e consulta persistida de comandos do agente.
+- confirmação, progresso e resultado com versão otimista e transições sem regressão.
+- reconciliação técnica de arquivo pelo agente em `/api/v1/agent/media-files/{media_file_id}/state`.
+- histórico em `/api/v1/media-files/{media_file_id}/metadata-history`;
+- restauração em `/api/v1/media-files/{media_file_id}/metadata-history/{version}/restore`.
 
 O contrato vigente está em `contracts/openapi/v1.yaml`.
 
@@ -119,6 +199,14 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - `projects/0001_initial.py`: clientes, projetos e acessos;
 - `audit/0001_initial.py`: eventos funcionais de auditoria;
 - `audit/0002_audit_event_details.py`: nome, descrição, estados renomeados e diferenças calculadas.
+- `audit/0003_protect_audit_events.py`: bloqueio de `UPDATE` e `DELETE` no PostgreSQL;
+- `notifications/0001_initial.py`: tentativas e resultados de entrega.
+- `catalog/0001_initial.py`: arquivos lógicos, versões físicas e objetos de armazenamento.
+- `catalog/0002_metadataversionmodel.py`: histórico versionado de metadados funcionais.
+- `catalog/0003_tags.py`: tags genéricas, personalizadas e vínculos com arquivos.
+- `catalog/0004_media_file_status_constraint.py`: estados oficiais e restrição de integridade no PostgreSQL.
+- `operations/0001_initial.py`: máquinas, presença e comandos persistidos.
+- `operations/0002_agent_command_execution.py`: progresso, resultado e marcos de execução.
 
 ## Arquitetura aplicada
 
@@ -129,53 +217,77 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - concessão e revogação de acesso a projetos separadas em casos de uso, portas e adaptadores;
 - alteração de acesso e respectiva auditoria protegidas pela mesma transação;
 - teste arquitetural contra imports de Django, DRF e Celery em `domain` e `application`;
+- teste arquitetural contra ORM e transações em todos os adaptadores HTTP;
 - uma classe ou unidade principal por arquivo, respeitadas as exceções aprovadas.
 
 ## Validações executadas
 
-- 26 testes automatizados aprovados;
+- baseline reproduzível da Fase 0 validada em 18 de agosto de 2026;
+- imagens atuais de backend, workers e Celery Beat reconstruídas;
+- PostgreSQL, Redis, backend, workers, Celery Beat e Mailpit operacionais;
+- endpoints `/health/live` e `/health/ready` aprovados após a reconstrução;
+- 55 testes automatizados aprovados;
 - lint Ruff aprovado;
 - `makemigrations --check --dry-run` sem mudanças pendentes;
 - testes de identidade, criptografia, empresas, projetos, convites e permissões;
 - testes de isolamento empresarial e proteção do último Proprietário;
 - testes de concorrência, auditoria, cálculo de diferenças, e-mail e limites arquiteturais.
+- teste de imutabilidade direta no PostgreSQL;
+- validação funcional real de Django, Redis, Celery e Mailpit.
+- testes de catálogo, remoção de caminho local, permissões por projeto e concorrência.
+- testes de tags, busca, cursor, máquinas, comandos, idempotência e transições de execução;
+- testes de estados do catálogo, idempotência, versão, vínculo de máquina e isolamento empresarial;
+- testes de auditoria idempotente de tags, histórico paginado, restauração e filtros combinados;
+- OpenAPI 3.1 validado sem erros; permanecem avisos documentais não bloqueadores;
+- migrations de catálogo e operações aplicadas ao PostgreSQL local.
+- 7 testes automatizados do agente aprovados em runtime auxiliar Python 3.12;
+- Ruff do agente aprovado;
+- tela PySide6 validada em modo sem exibição;
+- JSON do realm Keycloak e composição Docker validados estaticamente.
+- 25 testes automatizados do agente aprovados após o incremento da Fase 4;
+- upgrade SQLite v1→v3 validado sem perda da identificação da instalação;
+- conteúdo e horário dos arquivos de origem preservados nos testes;
+- recuperação da prévia e persistência da seleção validadas;
+- limites entre domínio, aplicação e infraestrutura do agente validados automaticamente.
+- movimentação segura, cópia verificada, checkpoints e retomada validados com arquivos temporários;
+- contrato de ingestão idempotente implementado e Ruff aprovado no backend;
+- três testes de arquitetura do backend aprovados no runtime auxiliar.
 
 ## Limitações conhecidas
 
-- listagens e criação de clientes e projetos ainda acessam ORM em views;
-- listagem de membros e contexto empresarial ainda acessam ORM em adaptadores HTTP;
-- a imutabilidade da auditoria ainda não está reforçada no PostgreSQL contra comandos diretos de `UPDATE` e `DELETE`;
-- Celery, Redis e Mailpit ainda precisam de validação funcional conjunta;
-- tentativas, falhas e entregas de notificação ainda não possuem persistência própria;
 - notificações internas ainda não foram implementadas;
-- paginação por cursor ainda não foi implementada;
 - Row-Level Security ainda não foi aplicada no PostgreSQL;
-- catálogo, agente local, uploads, Drive, frontend, aprovações e downloads permanecem pendentes.
+- ensaio funcional do agente com Python 3.14, Keycloak, conta e empresa reais permanece pendente;
+- empacotamento executável do agente ainda não foi realizado;
+- extração avançada de data original de câmera ainda não possui adaptador por formato;
+- Fases 3 e 4 ainda requerem ensaio manual da interface com Python 3.14;
+- migration `catalog.0005` e testes Django da ingestão aguardam o ambiente Docker;
+- WebSocket, uploads, Drive, frontend, aprovações e downloads permanecem pendentes.
 
 ## Próxima etapa obrigatória
 
-Concluir a consolidação arquitetural administrativa:
+Fechar a validação funcional das Fases 2 a 4 e o último item da Fase 4:
 
-1. migrar listagens e criação de clientes e projetos para casos de uso e portas;
-2. migrar listagem de membros e contexto empresarial para portas próprias;
-3. retirar acesso ao ORM dos adaptadores HTTP restantes;
-4. ampliar os testes arquiteturais para todos os adaptadores HTTP;
-5. reforçar a imutabilidade de auditoria no PostgreSQL;
-6. persistir tentativas e resultados de entrega de notificações;
-7. validar o fluxo real entre Django, Celery, Redis e Mailpit;
-8. atualizar contratos e testes correspondentes.
+1. preparar `.env.dev` local sem versionar segredos;
+2. subir Keycloak e executar login real com Python 3.14;
+3. criar uma empresa e validar presença e comando `PING` ponta a ponta;
+4. aplicar `catalog.0005` e executar a suíte Django com a ingestão idempotente;
+5. ensaiar seleção, organização, interrupção e retomada na interface;
+6. implementar a abertura da operação no frontend durante a Fase 5.
 
-Depois dessa consolidação, a próxima fatia funcional será o catálogo audiovisual.
+O detalhamento de retomada, limitações do ambiente e ordem de leitura está consolidado
+em [Continuidade do MVP](continuidade-mvp.md).
 
 ## Critérios de aceite da próxima etapa
 
-- views limitadas à tradução HTTP e composição;
-- domínio e aplicação independentes de frameworks;
-- ORM restrito à infraestrutura de persistência;
-- eventos de auditoria protegidos também no banco;
-- tentativa, entrega e falha de e-mail rastreáveis;
-- nenhum token ou segredo presente em logs ou auditoria;
-- lint, migrations e suíte completa aprovados.
+- login real abre no navegador e o reinício exige nova autenticação;
+- máquina aparece online e conclui um `PING` sem duplicar o comando;
+- fila local permanece após reinício sem armazenar token;
+- análise local não altera arquivos e calcula checksum em streaming;
+- prévia completa pode ser reaberta antes da confirmação;
+- organização exige confirmação explícita e nunca sobrescreve um destino;
+- cada movimentação concluída possui checkpoint idempotente;
+- Ruff e suítes afetadas permanecem aprovados.
 
 ## Protocolo de atualização
 

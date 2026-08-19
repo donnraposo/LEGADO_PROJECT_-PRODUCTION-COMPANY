@@ -10,4 +10,6 @@ urlpatterns = [
     path("api/v1/", include("modules.companies.urls")),
     path("api/v1/", include("modules.projects.urls")),
     path("api/v1/", include("modules.audit.urls")),
+    path("api/v1/", include("modules.catalog.urls")),
+    path("api/v1/", include("modules.operations.urls")),
 ]

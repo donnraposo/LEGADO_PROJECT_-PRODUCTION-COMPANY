@@ -1,5 +1,8 @@
 # Continuidade após reinstalação do Codex
 
+> Este arquivo preserva somente o histórico da reinstalação do Codex. Para continuar
+> o software e o MVP, leia [Continuidade do MVP](docs/04-entrega/continuidade-mvp.md).
+
 Data do registro: 01/08/2026
 
 ## Objetivo
@@ -8,8 +11,8 @@ Reinstalar o Codex no disco `D:` sem perder os projetos nem o contexto necessár
 
 ## Estado atual
 
-- Projeto aberto: `E:\Projetos\LEGADO`
-- Os arquivos deste projeto já estão no disco `E:`, portanto não dependem da instalação no `C:`.
+- Projeto definitivo: `D:\PROJETOS\LEGADO`
+- Os arquivos deste projeto permanecem no disco `D:` e não dependem da instalação no `C:`.
 - Dados locais do Codex encontrados em: `C:\Users\oDOnRaposo\.codex`
 - Tamanho aproximado desses dados na inspeção: `0,87 GB`
 - A instalação não foi identificada como pacote da Microsoft Store.
@@ -36,7 +39,7 @@ Foi solicitada a transferência do Codex e/ou de seus dados do disco `C:` para o
 
 Após reinstalar o Codex:
 
-1. Abrir a pasta `E:\Projetos\LEGADO` no Codex.
+1. Abrir a pasta `D:\PROJETOS\LEGADO` no Codex.
 2. Pedir: **Leia `CONTINUIDADE_CODEX.md` e continue a migração a partir do estado registrado.**
 3. Restaurar os dados de `.codex` somente com o Codex fechado.
 4. Validar o funcionamento antes de remover a cópia de segurança.
@@ -44,8 +47,7 @@ Após reinstalar o Codex:
 ## Critérios de conclusão da migração
 
 - O Codex abre normalmente a partir da nova instalação.
-- O projeto `E:\Projetos\LEGADO` permanece íntegro.
+- O projeto `D:\PROJETOS\LEGADO` permanece íntegro.
 - Login, configurações e histórico disponíveis, quando suportados pela reinstalação.
 - Novos projetos podem ser armazenados no disco `D:`.
 - A cópia antiga só é removida depois da validação.
-
