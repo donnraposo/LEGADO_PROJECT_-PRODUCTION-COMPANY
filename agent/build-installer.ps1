@@ -40,6 +40,13 @@ if ($LASTEXITCODE -ne 0) {
     throw "Falha ao gerar o aplicativo autocontido."
 }
 
+$packagedAgent = Join-Path $distDir "LegadoAgent\LegadoAgent.exe"
+$selfTest = Start-Process -FilePath $packagedAgent -ArgumentList "--self-test" `
+    -Wait -PassThru -WindowStyle Hidden
+if ($selfTest.ExitCode -ne 0) {
+    throw "A autoverificação SSL do aplicativo falhou com código $($selfTest.ExitCode)."
+}
+
 & $InnoCompiler $installerScript
 if ($LASTEXITCODE -ne 0) {
     throw "Falha ao gerar o instalador."

@@ -26,10 +26,16 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 
 - [x] scaffold Python/PySide6;
 - [x] instalação identificada e SQLite migrável;
-- [ ] login OIDC/PKCE implementado; falta ensaio manual com o Keycloak ativo;
+- [x] login OIDC/PKCE implementado e autenticação real confirmada com Keycloak;
 - [x] heartbeat, polling, confirmação e resultado;
 - [x] fila persistente;
 - [x] reinício exige login.
+- [x] empresa, cliente e múltiplos projetos podem ser criados pelo agente;
+- [x] tarefas HTTP permanecem vivas até entregar sucesso ou falha à interface;
+- [x] máquina é registrada automaticamente após selecionar a empresa;
+- [x] tentativa manual de conexão aparece somente após falha;
+- [ ] revalidar visualmente criação e conexão automática com o código-fonte atual;
+- [ ] recompilar o instalador com as correções mais recentes.
 
 ## Fase 3 — análise e prévia
 
@@ -55,6 +61,8 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 
 ## Fase 6 — Drive
 
+- [ ] contratos de armazenamento e adaptador local simulado;
+- [ ] modelos de conta, lote, item, tentativa e checkpoint;
 - [ ] OAuth `drive.file` e pasta isolada;
 - [ ] sessão retomável e checkpoint;
 - [ ] upload direto agente–Drive;

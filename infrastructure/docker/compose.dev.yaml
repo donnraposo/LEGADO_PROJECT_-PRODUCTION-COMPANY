@@ -24,6 +24,7 @@ services:
     restart: unless-stopped
     networks:
       - data
+      - database-admin
 
   redis:
     image: redis:8.8.1-alpine
@@ -264,3 +265,5 @@ networks:
   data:
     name: legado_data
     internal: true
+  database-admin:
+    name: legado_database_admin

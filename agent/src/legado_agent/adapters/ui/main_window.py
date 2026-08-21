@@ -75,8 +75,11 @@ class MainWindow(QMainWindow):
         self._analysis_task: AnalysisTask | None = None
         self._organization_task: OrganizationTask | None = None
         self._pool = QThreadPool.globalInstance()
+        self._background_tasks: set[BackgroundTask] = set()
         self._busy = False
         self._companies: dict[int, UUID] = {}
+        self._clients: dict[int, tuple[UUID, str]] = {}
+        self._available_projects: list[tuple[UUID, str, UUID, str]] = []
         self._projects: dict[int, tuple[str, UUID, str]] = {}
         self._selected_paths: list[Path] = []
         self._destination_root: Path | None = None
@@ -99,8 +102,12 @@ class MainWindow(QMainWindow):
         self._company = QComboBox()
         self._company.setEnabled(False)
         self._company.currentIndexChanged.connect(self._company_changed)
-        self._connect = QPushButton("Conectar máquina")
+        self._new_company = QPushButton("+ Nova empresa")
+        self._new_company.setEnabled(False)
+        self._new_company.clicked.connect(self._create_company)
+        self._connect = QPushButton("Tentar novamente")
         self._connect.setEnabled(False)
+        self._connect.hide()
         self._connect.clicked.connect(self._connect_machine)
         self._poll = QPushButton("Atualizar fila")
         self._poll.setEnabled(False)
@@ -108,12 +115,22 @@ class MainWindow(QMainWindow):
         session_controls = QHBoxLayout()
         session_controls.addWidget(self._login)
         session_controls.addWidget(self._company)
+        session_controls.addWidget(self._new_company)
         session_controls.addWidget(self._connect)
         session_controls.addWidget(self._poll)
 
+        self._client = QComboBox()
+        self._client.setEnabled(False)
+        self._client.currentIndexChanged.connect(self._client_changed)
+        self._new_client = QPushButton("+ Novo cliente")
+        self._new_client.setEnabled(False)
+        self._new_client.clicked.connect(self._create_client)
         self._project = QComboBox()
         self._project.setEnabled(False)
         self._project.currentIndexChanged.connect(self._project_changed)
+        self._new_project = QPushButton("+ Novo projeto")
+        self._new_project.setEnabled(False)
+        self._new_project.clicked.connect(self._create_project)
         self._choose_folder = QPushButton("Selecionar pasta")
         self._choose_folder.setEnabled(False)
         self._choose_folder.clicked.connect(self._select_folder)
@@ -136,8 +153,12 @@ class MainWindow(QMainWindow):
         self._cancel_organization.setEnabled(False)
         self._cancel_organization.clicked.connect(self._cancel_current_organization)
         analysis_controls = QHBoxLayout()
-        analysis_controls.addWidget(QLabel("Cliente / projeto:"))
+        analysis_controls.addWidget(QLabel("Cliente:"))
+        analysis_controls.addWidget(self._client)
+        analysis_controls.addWidget(self._new_client)
+        analysis_controls.addWidget(QLabel("Projeto:"))
         analysis_controls.addWidget(self._project)
+        analysis_controls.addWidget(self._new_project)
         analysis_controls.addWidget(self._choose_folder)
         analysis_controls.addWidget(self._choose_files)
         analysis_controls.addWidget(self._choose_destination)
@@ -220,6 +241,7 @@ class MainWindow(QMainWindow):
         self._company.blockSignals(False)
         self._company.setEnabled(bool(companies))
         self._login.setEnabled(False)
+        self._update_creation_controls()
         if companies:
             self._company_changed(self._company.currentIndex())
         else:
@@ -230,7 +252,8 @@ class MainWindow(QMainWindow):
         self._timer.stop()
         self._coordinator = None
         self._poll.setEnabled(False)
-        self._connect.setEnabled(company_id is not None)
+        self._connect.setEnabled(False)
+        self._connect.hide()
         self._clear_projects()
         if self._backend is None or company_id is None:
             return
@@ -240,38 +263,50 @@ class MainWindow(QMainWindow):
             clients = self._backend.list_clients(company_id)
             projects = self._backend.list_projects(company_id)
             client_names = {str(item["id"]): str(item["name"]) for item in clients}
-            return company_id, [
-                (
-                    client_names.get(
-                        str(project["client_id"]), "Cliente desconhecido"
-                    ),
-                    UUID(str(project["id"])),
-                    str(project["name"]),
-                )
-                for project in projects
-            ]
+            return (
+                company_id,
+                [(UUID(str(item["id"])), str(item["name"])) for item in clients],
+                [
+                    (
+                        UUID(str(project["client_id"])),
+                        client_names.get(
+                            str(project["client_id"]), "Cliente desconhecido"
+                        ),
+                        UUID(str(project["id"])),
+                        str(project["name"]),
+                    )
+                    for project in projects
+                ],
+            )
 
         self._run(load_context, self._projects_completed)
 
-    def _projects_completed(self, projects: object) -> None:
-        loaded_company_id, projects = projects
+    def _projects_completed(self, context: object) -> None:
+        loaded_company_id, clients, projects = context
         if loaded_company_id != self._company_id():
             return
-        self._project.blockSignals(True)
-        for index, context in enumerate(projects):
-            client_name, _project_id, project_name = context
-            self._project.addItem(f"{client_name} / {project_name}")
-            self._projects[index] = context
-        self._project.blockSignals(False)
-        self._project.setEnabled(bool(self._projects))
+        self._client.blockSignals(True)
+        for index, client_context in enumerate(clients):
+            _client_id, client_name = client_context
+            self._client.addItem(client_name)
+            self._clients[index] = client_context
+        self._client.blockSignals(False)
+        self._client.setEnabled(bool(self._clients))
+        self._available_projects = projects
+        self._render_projects_for_client()
+        self._update_creation_controls()
         self._update_analysis_controls()
         if self._projects:
             self._project_changed(self._project.currentIndex())
-            self._status.setText("Autenticado — selecione arquivos para analisar")
-        else:
-            self._status.setText("Autenticado — nenhum projeto acessível")
+        self._connect_machine()
 
     def _clear_projects(self) -> None:
+        self._client.blockSignals(True)
+        self._client.clear()
+        self._client.blockSignals(False)
+        self._clients.clear()
+        self._client.setEnabled(False)
+        self._available_projects.clear()
         self._project.blockSignals(True)
         self._project.clear()
         self._project.blockSignals(False)
@@ -285,19 +320,143 @@ class MainWindow(QMainWindow):
         self._destination_label.setText("Destino-base não selecionado")
         self._update_analysis_controls()
 
+    def _create_company(self) -> None:
+        if self._backend is None:
+            return
+        name = self._ask_name("Nova empresa", "Nome da empresa:")
+        if name is None:
+            return
+        self._status.setText("Criando empresa...")
+        self._run(lambda: self._backend.create_company(name), self._company_created)
+
+    def _company_created(self, company: object) -> None:
+        index = self._company.count()
+        self._company.blockSignals(True)
+        self._company.addItem(f"{company['name']} — {company['role']}")
+        self._companies[index] = UUID(str(company["id"]))
+        self._company.setCurrentIndex(index)
+        self._company.blockSignals(False)
+        self._company.setEnabled(True)
+        self._status.setText(f"Empresa {company['name']} criada.")
+        self._company_changed(index)
+
+    def _create_client(self) -> None:
+        company_id = self._company_id()
+        if self._backend is None or company_id is None:
+            return
+        name = self._ask_name("Novo cliente", "Nome do cliente:")
+        if name is None:
+            return
+        self._status.setText("Criando cliente...")
+        self._run(
+            lambda: (company_id, self._backend.create_client(company_id, name)),
+            self._client_created,
+        )
+
+    def _client_created(self, result: object) -> None:
+        company_id, client = result
+        if company_id != self._company_id():
+            return
+        index = self._client.count()
+        self._client.blockSignals(True)
+        self._client.addItem(str(client["name"]))
+        self._clients[index] = (UUID(str(client["id"])), str(client["name"]))
+        self._client.setCurrentIndex(index)
+        self._client.blockSignals(False)
+        self._client.setEnabled(True)
+        self._status.setText(f"Cliente {client['name']} criado.")
+        self._client_changed(index)
+
+    def _create_project(self) -> None:
+        company_id = self._company_id()
+        client_context = self._client_context()
+        if self._backend is None or company_id is None or client_context is None:
+            return
+        client_id, client_name = client_context
+        name = self._ask_name("Novo projeto", "Nome do projeto:")
+        if name is None:
+            return
+        self._status.setText("Criando projeto...")
+        self._run(
+            lambda: (
+                company_id,
+                client_name,
+                self._backend.create_project(company_id, client_id, name),
+            ),
+            self._project_created,
+        )
+
+    def _project_created(self, result: object) -> None:
+        company_id, client_name, project = result
+        if company_id != self._company_id():
+            return
+        client_id = UUID(str(project["client_id"]))
+        self._available_projects.append(
+            (client_id, client_name, UUID(str(project["id"])), str(project["name"]))
+        )
+        self._render_projects_for_client()
+        self._project.setCurrentIndex(self._project.count() - 1)
+        self._status.setText(f"Projeto {project['name']} criado.")
+        self._project_changed(self._project.currentIndex())
+
+    def _client_changed(self, _index: int) -> None:
+        self._render_projects_for_client()
+        self._update_creation_controls()
+
+    def _render_projects_for_client(self) -> None:
+        client_context = self._client_context()
+        selected_client_id = client_context[0] if client_context else None
+        self._project.blockSignals(True)
+        self._project.clear()
+        self._projects.clear()
+        for client_id, client_name, project_id, project_name in self._available_projects:
+            if client_id != selected_client_id:
+                continue
+            index = self._project.count()
+            self._project.addItem(f"{client_name} / {project_name}")
+            self._projects[index] = (client_name, project_id, project_name)
+        self._project.blockSignals(False)
+        self._project.setEnabled(bool(self._projects))
+        self._update_analysis_controls()
+
+    @staticmethod
+    def _ask_name(title: str, label: str) -> str | None:
+        value, accepted = QInputDialog.getText(None, title, label)
+        normalized = value.strip()
+        return normalized if accepted and normalized else None
+
     def _connect_machine(self) -> None:
         company_id = self._company_id()
         if self._backend is None or company_id is None:
             return
         self._coordinator = AgentCoordinator(self._repository, self._backend)
+        self._connect.setEnabled(False)
+        self._connect.hide()
         self._status.setText("Registrando presença da máquina...")
-        self._run(lambda: self._coordinator.connect(company_id), self._machine_connected)
+        self._run(
+            lambda: self._coordinator.connect(company_id),
+            self._machine_connected,
+            self._machine_connection_failed,
+        )
 
     def _machine_connected(self, machine_id: object) -> None:
+        self._connect.setEnabled(False)
+        self._connect.hide()
         self._status.setText(f"Máquina online: {machine_id}")
         self._poll.setEnabled(True)
         self._timer.start()
         self._poll_once()
+
+    def _machine_connection_failed(self, message: str) -> None:
+        self._busy = False
+        self._coordinator = None
+        self._timer.stop()
+        self._poll.setEnabled(False)
+        self._connect.setEnabled(self._company_id() is not None)
+        self._connect.show()
+        self._status.setText(f"Não foi possível conectar esta máquina: {message}")
+        self._update_creation_controls()
+        self._update_analysis_controls()
 
     def _poll_once(self) -> None:
         company_id = self._company_id()
@@ -705,24 +864,40 @@ class MainWindow(QMainWindow):
         )
         self._organize.setEnabled(available and (resumable or ready))
 
-    def _run(self, operation, success) -> None:
+    def _update_creation_controls(self) -> None:
+        available = self._session.authenticated and self._backend is not None and not self._busy
+        self._new_company.setEnabled(available)
+        self._new_client.setEnabled(available and self._company_id() is not None)
+        self._new_project.setEnabled(available and self._client_context() is not None)
+
+    def _run(self, operation, success, failure=None) -> None:
         self._busy = True
+        self._update_creation_controls()
         task = BackgroundTask(operation)
+        self._background_tasks.add(task)
         task.signals.succeeded.connect(lambda result: self._task_succeeded(success, result))
-        task.signals.failed.connect(self._task_failed)
+        task.signals.failed.connect(failure or self._task_failed)
+        task.signals.finished.connect(
+            lambda completed_task=task: self._background_tasks.discard(completed_task)
+        )
         self._pool.start(task)
 
     def _task_succeeded(self, callback, result: object) -> None:
         self._busy = False
         callback(result)
+        self._update_creation_controls()
 
     def _task_failed(self, message: str) -> None:
         self._busy = False
         self._login.setEnabled(not self._session.authenticated)
         self._status.setText(f"Falha operacional: {message}")
+        self._update_creation_controls()
 
     def _company_id(self) -> UUID | None:
         return self._companies.get(self._company.currentIndex())
+
+    def _client_context(self) -> tuple[UUID, str] | None:
+        return self._clients.get(self._client.currentIndex())
 
     def _project_context(self) -> tuple[str, UUID, str] | None:
         return self._projects.get(self._project.currentIndex())

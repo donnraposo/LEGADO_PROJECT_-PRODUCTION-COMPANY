@@ -5,7 +5,7 @@
 
 **Estado:** EM IMPLEMENTAÇÃO desde 1º de agosto de 2026.
 
-**Última consolidação:** 19 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
+**Última consolidação:** 21 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
 3 implementadas e aguardando validação funcional; Fase 4 tecnicamente concluída e
 aguardando ensaio funcional; primeira fatia executável da Fase 5 disponível no Docker.
 
@@ -38,6 +38,11 @@ Registro operacional do software implementado, das validações executadas, das 
 - heartbeat renovado a cada consulta, polling incremental e retomada da fila local;
 - confirmação, execução, resultado de `PING` e falha explícita de comando não suportado;
 - interface inicial para login, empresa, presença e acompanhamento da fila;
+- criação guiada de empresa, cliente e múltiplos projetos pela API central;
+- projetos filtrados pelo cliente selecionado e contexto atualizado sem reiniciar;
+- tarefas HTTP mantidas vivas até o retorno à interface, evitando estado visual preso;
+- registro da máquina iniciado automaticamente após carregar a empresa;
+- ação `Tentar novamente` oculta no fluxo normal e exibida apenas após falha;
 - realm local declarativo com clientes `legado-agent`, `legado-web` e `legado-api`.
 
 ### Análise e prévia local
@@ -259,7 +264,8 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - Ruff do agente aprovado;
 - tela PySide6 validada em modo sem exibição;
 - JSON do realm Keycloak e composição Docker validados estaticamente.
-- 26 testes automatizados do agente aprovados após o fechamento técnico da Fase 4;
+- 31 testes automatizados do agente aprovados após o incremento administrativo e
+  a correção do ciclo de vida assíncrono;
 - upgrade SQLite v1→v3 validado sem perda da identificação da instalação;
 - conteúdo e horário dos arquivos de origem preservados nos testes;
 - recuperação da prévia e persistência da seleção validadas;
@@ -270,13 +276,21 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - 4 testes do frontend, checagem TypeScript e build Vite aprovados;
 - imagem Docker do frontend construída, composição validada e serviço iniciado;
 - frontend e proxy de saúde do backend responderam HTTP `200`.
+- criação no gateway e na tela do agente validada com múltiplos projetos;
+- 6 testes backend específicos de empresas, clientes e projetos aprovados.
+- login real do agente e criação real de empresa confirmados no backend com HTTP `201`;
+- retenção da tarefa no `QThreadPool`, conexão automática e recuperação após falha
+  cobertas nos testes da interface;
 
 ## Limitações conhecidas
 
 - notificações internas ainda não foram implementadas;
 - Row-Level Security ainda não foi aplicada no PostgreSQL;
-- ensaio funcional do agente com Python 3.14, Keycloak, conta e empresa reais permanece pendente;
-- empacotamento executável do agente ainda não foi realizado;
+- ensaio funcional completo do agente em Python 3.14 permanece pendente;
+- existe instalador `0.1.1`, mas ele antecede as correções assíncronas e de conexão
+  automática; o código-fonte atual deve ser usado até nova compilação autorizada;
+- o runtime oficial Python 3.14 não foi instalado devido a falha MSI `1603`; as
+  validações atuais usam o runtime auxiliar Python 3.12;
 - extração avançada de data original de câmera ainda não possui adaptador por formato;
 - Fases 3 e 4 ainda requerem ensaio manual da interface com Python 3.14;
 - login e fluxo real do frontend ainda aguardam conta e dados de ensaio;
@@ -285,14 +299,15 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 
 ## Próxima etapa obrigatória
 
-Validar as Fases 2 a 4 e continuar a Fase 5:
+Revalidar o agente atual e iniciar a fundação da Fase 6:
 
-1. criar conta, empresa, cliente, projeto e catálogo de ensaio;
-2. executar login real no frontend e no agente com Python 3.14;
-3. validar presença e comando `PING` ponta a ponta;
-4. ensaiar seleção, organização, interrupção e retomada na interface;
-5. validar edição e tags no frontend com dados reais;
-6. implementar clientes, projetos, acessos, máquinas e operações no frontend.
+1. revalidar a conclusão visual da criação e o registro automático da máquina;
+2. criar contratos de armazenamento e adaptador local simulado do Drive;
+3. modelar conta, lote, item, tentativa e checkpoint de upload;
+4. preservar upload direto agente–Drive sem transportar binário pelo backend;
+5. implementar detecção automática de discos externos no agente;
+6. executar o ensaio completo em Python 3.14 quando o runtime estiver disponível;
+7. recompilar o instalador somente após autorização explícita.
 
 O detalhamento de retomada, limitações do ambiente e ordem de leitura está consolidado
 em [Continuidade do MVP](continuidade-mvp.md).

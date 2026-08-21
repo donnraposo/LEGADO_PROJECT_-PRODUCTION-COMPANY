@@ -15,7 +15,18 @@ from legado_agent.infrastructure.persistence.sqlite_organization_repository impo
 )
 
 
+def ssl_self_test() -> int:
+    import ssl
+
+    context = ssl.create_default_context()
+    if not context:
+        raise RuntimeError("Não foi possível inicializar o suporte SSL.")
+    return 0
+
+
 def main() -> int:
+    if "--self-test" in sys.argv:
+        return ssl_self_test()
     config = AgentConfig.from_environment()
     database = SQLiteDatabase(config.data_dir / "agent.sqlite3")
     database.migrate()

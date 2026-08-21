@@ -81,6 +81,61 @@ def test_gateway_lists_clients_and_projects_in_company_context() -> None:
     assert all(request.headers["x-company-id"] == str(company_id) for request in requests)
 
 
+def test_gateway_creates_company_client_and_multiple_projects() -> None:
+    company_id = uuid4()
+    client_id = uuid4()
+    project_ids = [uuid4(), uuid4()]
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        body = request.content.decode()
+        if request.url.path.endswith("/companies"):
+            return httpx.Response(
+                201,
+                json={"id": str(company_id), "name": "Produtora", "role": "OWNER"},
+            )
+        if request.url.path.endswith("/clients"):
+            return httpx.Response(201, json={"id": str(client_id), "name": "Cliente"})
+        project_id = project_ids[0] if "Filme A" in body else project_ids[1]
+        project_name = "Filme A" if "Filme A" in body else "Filme B"
+        return httpx.Response(
+            201,
+            json={
+                "id": str(project_id),
+                "client_id": str(client_id),
+                "name": project_name,
+            },
+        )
+
+    gateway = HttpBackendGateway(
+        "http://backend.local", "memory-only", transport=httpx.MockTransport(handler)
+    )
+    try:
+        assert gateway.create_company("Produtora")["role"] == "OWNER"
+        assert gateway.create_client(company_id, "Cliente")["id"] == str(client_id)
+        assert gateway.create_project(company_id, client_id, "Filme A")["id"] == str(
+            project_ids[0]
+        )
+        assert gateway.create_project(company_id, client_id, "Filme B")["id"] == str(
+            project_ids[1]
+        )
+    finally:
+        gateway.close()
+
+    assert [request.url.path for request in requests] == [
+        "/api/v1/companies",
+        "/api/v1/clients",
+        "/api/v1/projects",
+        "/api/v1/projects",
+    ]
+    assert "x-company-id" not in requests[0].headers
+    assert all(
+        request.headers["x-company-id"] == str(company_id) for request in requests[1:]
+    )
+    assert b'"client_id"' in requests[2].content
+
+
 def test_gateway_ingests_only_catalog_metadata() -> None:
     company_id = uuid4()
     project_id = uuid4()

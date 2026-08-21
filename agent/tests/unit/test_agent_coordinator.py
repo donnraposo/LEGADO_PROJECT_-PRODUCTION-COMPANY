@@ -30,11 +30,20 @@ class FakeBackend(BackendGateway):
     def list_companies(self) -> list[dict[str, object]]:
         return []
 
+    def create_company(self, name: str) -> dict[str, object]:
+        return {"id": str(uuid4()), "name": name, "role": "OWNER"}
+
     def list_clients(self, company_id) -> list[dict[str, object]]:
         return []
 
+    def create_client(self, company_id, name: str) -> dict[str, object]:
+        return {"id": str(uuid4()), "name": name}
+
     def list_projects(self, company_id) -> list[dict[str, object]]:
         return []
+
+    def create_project(self, company_id, client_id, name: str) -> dict[str, object]:
+        return {"id": str(uuid4()), "client_id": str(client_id), "name": name}
 
     def heartbeat(self, company_id, installation_id, display_name, os_family, agent_version):
         return self.machine_id

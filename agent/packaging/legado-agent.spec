@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import sys
 from pathlib import Path
 
 
@@ -19,6 +20,18 @@ analysis = Analysis(
     noarchive=False,
     optimize=1,
 )
+
+openssl_names = {"libcrypto-3-x64.dll", "libssl-3-x64.dll"}
+analysis.binaries = [
+    item for item in analysis.binaries if Path(item[0]).name.lower() not in openssl_names
+]
+python_dll_dir = Path(sys.base_prefix) / "DLLs"
+for openssl_name in sorted(openssl_names):
+    openssl_dll = python_dll_dir / openssl_name
+    if not openssl_dll.is_file():
+        raise FileNotFoundError(f"DLL SSL do runtime Python não encontrada: {openssl_dll}")
+    analysis.binaries.append((openssl_name, str(openssl_dll), "BINARY"))
+
 python_archive = PYZ(analysis.pure)
 
 executable = EXE(

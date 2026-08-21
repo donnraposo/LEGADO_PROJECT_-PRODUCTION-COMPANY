@@ -12,6 +12,10 @@ class CatalogSyncConflictError(CatalogSyncError):
     pass
 
 
+class BackendOperationError(Exception):
+    pass
+
+
 class BackendGateway(ABC):
     @abstractmethod
     def ingest_media_file(
@@ -32,11 +36,25 @@ class BackendGateway(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def create_company(self, name: str) -> dict[str, object]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_clients(self, company_id: UUID) -> list[dict[str, object]]:
         raise NotImplementedError
 
     @abstractmethod
+    def create_client(self, company_id: UUID, name: str) -> dict[str, object]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_projects(self, company_id: UUID) -> list[dict[str, object]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def create_project(
+        self, company_id: UUID, client_id: UUID, name: str
+    ) -> dict[str, object]:
         raise NotImplementedError
 
     @abstractmethod
