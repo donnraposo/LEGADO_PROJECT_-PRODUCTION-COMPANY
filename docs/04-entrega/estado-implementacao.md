@@ -6,8 +6,8 @@
 **Estado:** EM IMPLEMENTAÇÃO desde 1º de agosto de 2026.
 
 **Última consolidação:** 19 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
-3 implementadas e aguardando validação funcional; núcleo da Fase 4 implementado e
-aguardando validação funcional, migration PostgreSQL e abertura do frontend.
+3 implementadas e aguardando validação funcional; Fase 4 tecnicamente concluída e
+aguardando ensaio funcional; primeira fatia executável da Fase 5 disponível no Docker.
 
 Registro operacional do software implementado, das validações executadas, das limitações conhecidas e do ponto obrigatório de continuidade.
 
@@ -38,7 +38,7 @@ Registro operacional do software implementado, das validações executadas, das 
 - heartbeat renovado a cada consulta, polling incremental e retomada da fila local;
 - confirmação, execução, resultado de `PING` e falha explícita de comando não suportado;
 - interface inicial para login, empresa, presença e acompanhamento da fila;
-- realm local declarativo com clientes `legado-agent` e `legado-api`.
+- realm local declarativo com clientes `legado-agent`, `legado-web` e `legado-api`.
 
 ### Análise e prévia local
 
@@ -63,6 +63,20 @@ Registro operacional do software implementado, das validações executadas, das 
 - serviço separado para migrations;
 - Ruff, pytest e verificação de migrations disponíveis no container de desenvolvimento;
 - dados reais, segredos e volumes excluídos do repositório.
+
+### Frontend web
+
+**Estado:** EM IMPLEMENTAÇÃO — PRIMEIRA FATIA EXECUTÁVEL.
+
+- React 19, TypeScript, Vite, React Router e TanStack Query;
+- login obrigatório Keycloak OIDC/PKCE, com token somente em memória;
+- seleção de empresa e projeto e rota contextual do catálogo;
+- listagem, busca, resumo, edição de metadados e aplicação ou remoção de tags;
+- cliente HTTP com token e empresa somente em cabeçalhos;
+- tipos principais gerados do contrato OpenAPI;
+- estados de carregamento, vazio, erro e layout responsivo para pessoa não técnica;
+- paleta visual principal verde, branca e preta;
+- execução local e por serviço Docker `web`.
 
 ## Módulos implementados
 
@@ -205,6 +219,7 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - `catalog/0002_metadataversionmodel.py`: histórico versionado de metadados funcionais.
 - `catalog/0003_tags.py`: tags genéricas, personalizadas e vínculos com arquivos.
 - `catalog/0004_media_file_status_constraint.py`: estados oficiais e restrição de integridade no PostgreSQL.
+- `catalog/0005_fileversion_ingestion_id.py`: ingestão idempotente originada pelo agente.
 - `operations/0001_initial.py`: máquinas, presença e comandos persistidos.
 - `operations/0002_agent_command_execution.py`: progresso, resultado e marcos de execução.
 
@@ -226,7 +241,7 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - imagens atuais de backend, workers e Celery Beat reconstruídas;
 - PostgreSQL, Redis, backend, workers, Celery Beat e Mailpit operacionais;
 - endpoints `/health/live` e `/health/ready` aprovados após a reconstrução;
-- 55 testes automatizados aprovados;
+- 57 testes automatizados do backend aprovados;
 - lint Ruff aprovado;
 - `makemigrations --check --dry-run` sem mudanças pendentes;
 - testes de identidade, criptografia, empresas, projetos, convites e permissões;
@@ -244,14 +259,17 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - Ruff do agente aprovado;
 - tela PySide6 validada em modo sem exibição;
 - JSON do realm Keycloak e composição Docker validados estaticamente.
-- 25 testes automatizados do agente aprovados após o incremento da Fase 4;
+- 26 testes automatizados do agente aprovados após o fechamento técnico da Fase 4;
 - upgrade SQLite v1→v3 validado sem perda da identificação da instalação;
 - conteúdo e horário dos arquivos de origem preservados nos testes;
 - recuperação da prévia e persistência da seleção validadas;
 - limites entre domínio, aplicação e infraestrutura do agente validados automaticamente.
 - movimentação segura, cópia verificada, checkpoints e retomada validados com arquivos temporários;
 - contrato de ingestão idempotente implementado e Ruff aprovado no backend;
-- três testes de arquitetura do backend aprovados no runtime auxiliar.
+- migration `catalog.0005` aplicada no PostgreSQL local;
+- 4 testes do frontend, checagem TypeScript e build Vite aprovados;
+- imagem Docker do frontend construída, composição validada e serviço iniciado;
+- frontend e proxy de saúde do backend responderam HTTP `200`.
 
 ## Limitações conhecidas
 
@@ -261,19 +279,20 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - empacotamento executável do agente ainda não foi realizado;
 - extração avançada de data original de câmera ainda não possui adaptador por formato;
 - Fases 3 e 4 ainda requerem ensaio manual da interface com Python 3.14;
-- migration `catalog.0005` e testes Django da ingestão aguardam o ambiente Docker;
-- WebSocket, uploads, Drive, frontend, aprovações e downloads permanecem pendentes.
+- login e fluxo real do frontend ainda aguardam conta e dados de ensaio;
+- gestão web de clientes, projetos, acessos, máquinas, operações e auditoria permanece pendente;
+- WebSocket, uploads, Drive, aprovações e downloads permanecem pendentes.
 
 ## Próxima etapa obrigatória
 
-Fechar a validação funcional das Fases 2 a 4 e o último item da Fase 4:
+Validar as Fases 2 a 4 e continuar a Fase 5:
 
-1. preparar `.env.dev` local sem versionar segredos;
-2. subir Keycloak e executar login real com Python 3.14;
-3. criar uma empresa e validar presença e comando `PING` ponta a ponta;
-4. aplicar `catalog.0005` e executar a suíte Django com a ingestão idempotente;
-5. ensaiar seleção, organização, interrupção e retomada na interface;
-6. implementar a abertura da operação no frontend durante a Fase 5.
+1. criar conta, empresa, cliente, projeto e catálogo de ensaio;
+2. executar login real no frontend e no agente com Python 3.14;
+3. validar presença e comando `PING` ponta a ponta;
+4. ensaiar seleção, organização, interrupção e retomada na interface;
+5. validar edição e tags no frontend com dados reais;
+6. implementar clientes, projetos, acessos, máquinas e operações no frontend.
 
 O detalhamento de retomada, limitações do ambiente e ordem de leitura está consolidado
 em [Continuidade do MVP](continuidade-mvp.md).

@@ -147,6 +147,15 @@ Ao retomar este projeto:
 
 ## 41. Histórico do documento
 
+### 19 de agosto de 2026 — versão 0.31
+
+- concluído tecnicamente o último item da Fase 4 com abertura contextual do catálogo;
+- iniciada a Fase 5 com React, TypeScript, Vite, OIDC/PKCE e contexto empresarial;
+- entregues catálogo, busca, edição de metadados e tags na primeira fatia web;
+- frontend integrado ao Docker local e validado por testes, tipos, build e HTTP;
+- definida paleta principal verde, branca e preta;
+- login real, dados de ensaio e validação visual permanecem pendentes.
+
 ### 19 de agosto de 2026 — versão 0.30
 
 - implementado o núcleo da organização local segura da Fase 4;

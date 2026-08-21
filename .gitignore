@@ -32,6 +32,7 @@ staticfiles/
 
 # Node, React e Vite
 node_modules/
+.pnpm-store/
 dist/
 .vite/
 coverage/

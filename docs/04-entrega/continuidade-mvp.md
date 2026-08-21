@@ -29,8 +29,8 @@ retornar ao último commit.
 | 1 — catálogo | VALIDADO | catálogo, tags, histórico, filtros, reconciliação e 55 testes backend |
 | 2 — agente mínimo | IMPLEMENTADO — AGUARDA VALIDAÇÃO | SQLite, OIDC/PKCE, heartbeat, comandos e fila |
 | 3 — análise e prévia | IMPLEMENTADO — AGUARDA VALIDAÇÃO | análise somente leitura, SHA-256, conflitos, prévia e 17 testes agente |
-| 4 — organização segura | EM IMPLEMENTAÇÃO — NÚCLEO PRONTO | movimentação, checkpoints e catálogo implementados; falta ensaio funcional e abertura do frontend |
-| 5 — frontend web | PLANEJADO | não iniciado |
+| 4 — organização segura | IMPLEMENTADO — AGUARDA VALIDAÇÃO | movimentação, checkpoints, catálogo e abertura contextual implementados; falta ensaio funcional |
+| 5 — frontend web | EM IMPLEMENTAÇÃO | primeira fatia Docker com autenticação, contexto, catálogo, edição e tags |
 | 6 — Drive | PLANEJADO | não iniciado |
 | 7 — tempo real | PLANEJADO | não iniciado |
 | 8 — fechamento | PLANEJADO | não iniciado |
@@ -70,7 +70,7 @@ retornar ao último commit.
 
 ### Backend — última baseline
 
-- 55 testes aprovados;
+- 57 testes aprovados;
 - Ruff aprovado;
 - migrations aplicadas e sem mudanças pendentes;
 - OpenAPI 3.1 válido, com avisos documentais não bloqueadores;
@@ -79,7 +79,7 @@ retornar ao último commit.
 
 ### Agente — última baseline
 
-- 25 testes aprovados;
+- 26 testes aprovados;
 - Ruff aprovado;
 - SQLite v1→v3 validado sem perder o identificador da instalação;
 - conteúdo e horário dos arquivos de origem preservados;
@@ -87,29 +87,35 @@ retornar ao último commit.
 - limites arquiteturais validados;
 - testes executados no runtime auxiliar Python 3.12.
 
+### Frontend — primeira baseline
+
+- 4 testes aprovados;
+- checagem TypeScript e build Vite aprovados;
+- imagem Docker construída e composição validada;
+- frontend e proxy do backend responderam HTTP `200`;
+- paleta principal verde, branca e preta aplicada.
+
 ## Validações ainda pendentes
 
-- criar `infrastructure/docker/.env.dev` local sem versionar segredos;
 - executar o agente no Python 3.14 oficial;
 - subir Keycloak e testar login OIDC real no navegador;
 - criar conta e empresa de teste;
 - validar presença e comando `PING` ponta a ponta;
 - ensaiar seleção, cancelamento e recuperação pela interface visível;
 - validar a extração avançada da data original de câmera quando houver adaptador.
-- aplicar a migration PostgreSQL `catalog.0005` e executar a nova integração do
-  catálogo no ambiente Docker;
 - ensaiar organização real em mesmo volume, entre volumes e após desconexão;
-- implementar a abertura do frontend na operação correta.
+- validar login, seleção contextual, catálogo, edição e tags com dados reais;
+- validar visualmente responsividade e acessibilidade do frontend.
 
 ## Próxima implementação
 
-Fechar a Fase 4 sem ampliar o escopo:
+Validar o fluxo já implementado e continuar a Fase 5:
 
-1. executar migration e testes Django no ambiente Docker;
-2. validar visualmente o fluxo completo no Windows/Python 3.14;
-3. testar interrupção por mídia removível e retomada do catálogo;
-4. abrir o frontend na operação correta quando a Fase 5 fornecer essa rota;
-5. então iniciar a arquitetura da Fase 5, frontend operacional mínimo.
+1. criar conta, empresa, cliente, projeto e dados de teste;
+2. validar login real do frontend e do agente com Keycloak;
+3. validar visualmente o fluxo completo no Windows/Python 3.14;
+4. testar interrupção por mídia removível e retomada do catálogo;
+5. implementar no frontend clientes, projetos, acessos, máquinas e operações.
 
 ## Critérios obrigatórios da Fase 4
 
@@ -130,4 +136,4 @@ Fechar a Fase 4 sem ampliar o escopo:
 4. [Organização local](../02-regras-negocio/organizacao-local.md);
 5. [Filas, retomada e idempotência](../03-arquitetura/filas-retomada-idempotencia.md);
 6. código e testes existentes em `agent/`;
-7. somente então elaborar a arquitetura da Fase 4.
+7. continuar a Fase 5 a partir da primeira fatia executável.

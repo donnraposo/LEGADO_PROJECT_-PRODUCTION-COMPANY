@@ -12,6 +12,7 @@ class AgentConfig:
     oidc_client_id: str
     data_dir: Path
     poll_interval_seconds: int = 5
+    web_url: str = "http://127.0.0.1:5173"
 
     @classmethod
     def from_environment(cls) -> AgentConfig:
@@ -24,4 +25,5 @@ class AgentConfig:
             oidc_client_id=os.environ.get("LEGADO_OIDC_CLIENT_ID", "legado-agent"),
             data_dir=Path(os.environ.get("LEGADO_DATA_DIR", default_data)),
             poll_interval_seconds=int(os.environ.get("LEGADO_POLL_INTERVAL", "5")),
+            web_url=os.environ.get("LEGADO_WEB_URL", "http://127.0.0.1:5173"),
         )

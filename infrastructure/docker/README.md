@@ -25,18 +25,20 @@ docker compose --env-file .env.dev -f compose.dev.yaml up -d --build backend
 ## Serviços opcionais
 
 ```text
-docker compose --env-file .env.dev -f compose.dev.yaml --profile identity up -d
+docker compose --env-file .env.dev -f compose.dev.yaml --profile identity up -d --build
 docker compose --env-file .env.dev -f compose.dev.yaml --profile automation up -d
 ```
 
 ## Endereços locais
 
 - backend: `http://127.0.0.1:8000`;
+- frontend: `http://127.0.0.1:5173`;
 - Keycloak, quando ativado: `http://127.0.0.1:8080`;
 - n8n, quando ativado: `http://127.0.0.1:5678`.
 
 Na primeira inicialização, o Keycloak importa o realm `legado` e os clientes públicos
-`legado-agent` (Authorization Code com PKCE S256) e `legado-api`. O cadastro local de
+`legado-agent` e `legado-web` (Authorization Code com PKCE S256), além de `legado-api`.
+O cadastro local de
 conta fica disponível na tela de login. A importação não substitui um realm já existente.
 
 ## Persistência

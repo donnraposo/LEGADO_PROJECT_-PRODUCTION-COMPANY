@@ -42,11 +42,11 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 - [x] exclusão e sobrescrita proibidas;
 - [x] checkpoints e retomada segura;
 - [x] catálogo sem caminho completo;
-- [ ] frontend aberto na operação correta.
+- [x] frontend aberto na operação correta.
 
 ## Fase 5 — frontend
 
-- [ ] React/TypeScript/Vite;
+- [x] React/TypeScript/Vite;
 - [ ] login e contexto empresarial;
 - [ ] clientes, projetos e acessos;
 - [ ] catálogo, tags, máquinas e operações;

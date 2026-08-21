@@ -118,7 +118,7 @@ extração avançada da data original de câmera para formatos compatíveis.
 
 ## Fase 4 — organização local segura
 
-**Estado:** EM IMPLEMENTAÇÃO — NÚCLEO IMPLEMENTADO EM 19 DE AGOSTO DE 2026.
+**Estado:** IMPLEMENTADO — AGUARDA VALIDAÇÃO FUNCIONAL.
 
 **Incremento implementado:** destino confirmado antes da análise; decisões explícitas
 para conflitos; uma operação ativa; movimentação sem substituição; cópia em streaming
@@ -126,6 +126,11 @@ com SHA-256 entre volumes; checkpoints SQLite; recuperação de queda; interrup�
 entre arquivos; e ingestão idempotente no catálogo sem caminho local. Ruff e 25 testes
 do agente foram aprovados. O backend passou em Ruff e nos testes arquiteturais; sua
 nova integração Django e migration aguardam o ambiente Docker.
+
+**Fechamento técnico em 19 de agosto de 2026:** migration `catalog.0005` aplicada,
+suíte backend ampliada para 57 testes, abertura do catálogo correto pelo agente
+implementada e coberta pelo 26º teste do agente. Falta o ensaio visível ponta a ponta
+no Windows com uma conta e arquivos reais.
 
 - confirmação explícita e uma operação por máquina;
 - diretórios e movimentação sem sobrescrita;
@@ -139,7 +144,13 @@ nova integração Django e migration aguardam o ambiente Docker.
 
 ## Fase 5 — frontend operacional mínimo
 
-**Estado:** PLANEJADO.
+**Estado:** EM IMPLEMENTAÇÃO — PRIMEIRA FATIA EXECUTÁVEL.
+
+**Incremento de 19 de agosto de 2026:** base React/TypeScript/Vite, OIDC/PKCE com
+Keycloak, seleção de empresa e projeto, rota contextual, listagem e busca do catálogo,
+edição de metadados e aplicação de tags. O frontend foi integrado ao Docker local com
+paleta verde, branca e preta; 4 testes, tipos, build e respostas HTTP foram aprovados.
+O login real e o uso com dados reais ainda aguardam ensaio manual.
 
 - React, TypeScript e Vite;
 - login e seleção de empresa;
