@@ -17,6 +17,9 @@ dev = [
     "pytest>=9,<10",
     "ruff>=0.12,<1",
 ]
+packaging = [
+    "pyinstaller>=6,<7",
+]
 
 [project.scripts]
 legado-agent = "legado_agent.main:main"

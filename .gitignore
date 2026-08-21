@@ -20,6 +20,8 @@ venv/
 .ruff_cache/
 .coverage
 htmlcov/
+/agent/build/
+/agent/release/
 
 # Django e bancos locais
 *.sqlite3
