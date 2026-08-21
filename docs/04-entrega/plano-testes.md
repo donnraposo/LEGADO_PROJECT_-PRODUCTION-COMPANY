@@ -31,9 +31,15 @@ foram cobertos. Ruff do agente e backend e três testes arquiteturais do backend
 aprovados. Os dois novos testes de integração Django, migration PostgreSQL e ensaio
 visual em Windows aguardam o ambiente Docker/Python 3.14.
 
+**Fechamento técnico da Fase 4 e primeiro incremento da Fase 5 em 19 de agosto de
+2026:** migration `catalog.0005` aplicada e 57 testes backend aprovados; agente
+ampliado para 26 testes com abertura contextual do frontend; frontend com 4 testes,
+checagem TypeScript, build Vite, imagem Docker, HTTP `200` e proxy do backend aprovados.
+Permanecem pendentes o login real, o ensaio visual e o fluxo com dados reais.
+
 **Estado:** EM EXECUÇÃO. Baselines do backend e do agente registradas até 19 de agosto
-de 2026; próximas validações são os ensaios funcionais das Fases 2 e 3 e os testes de
-segurança da organização local na Fase 4.
+de 2026; próximas validações são os ensaios funcionais das Fases 2 a 5 com conta e
+dados reais.
 
 Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empresas, contratos de API, idempotência, retomada de upload, integração com Drive, segurança, auditoria e fluxos ponta a ponta.
 
@@ -95,5 +101,9 @@ Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empr
 - falha do catálogo deixa a operação retomável e reutiliza a mesma chave idempotente;
 - gateway do agente não envia `source_path` nem `destination_path` ao backend;
 - backend devolve o mesmo arquivo em ingestão repetida e rejeita conteúdo divergente.
+- cliente web mantém token e empresa somente nos cabeçalhos HTTP;
+- cliente web converte falhas da API em mensagem segura;
+- formatação de tamanhos, tipos, build Vite e inicialização Docker foram validados;
+- rota aberta pelo agente contém exatamente empresa e projeto concluídos.
 
 Consulte também [Critérios de aceite](criterios-aceite.md) e [Requisitos não funcionais](../01-produto/requisitos-nao-funcionais.md).

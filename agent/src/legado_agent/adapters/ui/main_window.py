@@ -34,6 +34,9 @@ from legado_agent.application.reconcile_organization_use_case import (
 )
 from legado_agent.application.session import AgentSession
 from legado_agent.domain.organization_decision import OrganizationDecision
+from legado_agent.infrastructure.browser.system_browser_frontend_launcher import (
+    SystemBrowserFrontendLauncher,
+)
 from legado_agent.infrastructure.config import AgentConfig
 from legado_agent.infrastructure.filesystem.safe_file_discovery import SafeFileDiscovery
 from legado_agent.infrastructure.filesystem.streaming_sha256 import StreamingSha256
@@ -630,6 +633,13 @@ class MainWindow(QMainWindow):
         self._render_organization_status(operation.id)
         self._status.setText(f"Organização finalizada — estado {status}")
         self._update_analysis_controls()
+        if status == "COMPLETED":
+            QTimer.singleShot(
+                0,
+                lambda: SystemBrowserFrontendLauncher(self._config.web_url).open_catalog(
+                    operation.company_id, operation.project_id
+                ),
+            )
 
     def _organization_failed(self, message: str) -> None:
         self._organization_task = None
