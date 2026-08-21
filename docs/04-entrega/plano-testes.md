@@ -37,7 +37,21 @@ ampliado para 26 testes com abertura contextual do frontend; frontend com 4 test
 checagem TypeScript, build Vite, imagem Docker, HTTP `200` e proxy do backend aprovados.
 Permanecem pendentes o login real, o ensaio visual e o fluxo com dados reais.
 
-**Estado:** EM EXECUÇÃO. Baselines do backend e do agente registradas até 19 de agosto
+**Incremento administrativo do agente em 21 de agosto de 2026:** suíte ampliada para
+29 testes; criação de empresa, cliente e dois projetos do mesmo cliente coberta no
+gateway e na interface Qt; contexto empresarial, cabeçalhos e atualização imediata
+dos seletores validados. Ruff e 6 testes de integração backend aprovados. Permanece
+pendente o ensaio visível com uma conta de e-mail verificado.
+
+**Correção assíncrona e conexão automática em 21 de agosto de 2026:** suíte do agente
+ampliada para 31 testes. Uma criação real de empresa retornou HTTP `201`, mas revelou
+que a referência local da tarefa podia ser descartada antes de a interface consumir o
+sinal. A janela agora retém tarefas até `finished`; o registro da máquina ocorre após
+carregar a empresa e `Tentar novamente` é exibido somente após falha. Testes cobrem
+entrega assíncrona, liberação da tarefa, heartbeat automático e recuperação visual.
+Ruff permaneceu aprovado. A revalidação visual do código corrigido está pendente.
+
+**Estado:** EM EXECUÇÃO. Baselines do backend e do agente registradas até 21 de agosto
 de 2026; próximas validações são os ensaios funcionais das Fases 2 a 5 com conta e
 dados reais.
 
@@ -101,6 +115,11 @@ Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empr
 - falha do catálogo deixa a operação retomável e reutiliza a mesma chave idempotente;
 - gateway do agente não envia `source_path` nem `destination_path` ao backend;
 - backend devolve o mesmo arquivo em ingestão repetida e rejeita conteúdo divergente.
+- agente cria empresa, cliente e múltiplos projetos usando somente a API central;
+- troca de cliente filtra os projetos disponíveis para impedir contexto incoerente;
+- tarefa de fundo permanece viva até a interface receber sucesso ou falha;
+- seleção de empresa registra a máquina e inicia heartbeat sem ação manual;
+- falha de registro exibe `Tentar novamente` sem manter fila ou timer ativos;
 - cliente web mantém token e empresa somente nos cabeçalhos HTTP;
 - cliente web converte falhas da API em mensagem segura;
 - formatação de tamanhos, tipos, build Vite e inicialização Docker foram validados;

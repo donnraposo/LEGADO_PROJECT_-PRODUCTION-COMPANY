@@ -4,6 +4,7 @@ import httpx
 
 from legado_agent.application.ports.backend_gateway import (
     BackendGateway,
+    BackendOperationError,
     CatalogSyncConflictError,
     CatalogSyncError,
 )
@@ -66,6 +67,11 @@ class HttpBackendGateway(BackendGateway):
         response.raise_for_status()
         return response.json()["items"]
 
+    def create_company(self, name: str) -> dict[str, object]:
+        response = self._client.post("/api/v1/companies", json={"name": name})
+        self._raise_operation_error(response, "Não foi possível criar a empresa.")
+        return response.json()
+
     def list_clients(self, company_id: UUID) -> list[dict[str, object]]:
         response = self._client.get(
             "/api/v1/clients", headers=self._company_headers(company_id)
@@ -73,12 +79,32 @@ class HttpBackendGateway(BackendGateway):
         response.raise_for_status()
         return response.json()["items"]
 
+    def create_client(self, company_id: UUID, name: str) -> dict[str, object]:
+        response = self._client.post(
+            "/api/v1/clients",
+            headers=self._company_headers(company_id),
+            json={"name": name},
+        )
+        self._raise_operation_error(response, "Não foi possível criar o cliente.")
+        return response.json()
+
     def list_projects(self, company_id: UUID) -> list[dict[str, object]]:
         response = self._client.get(
             "/api/v1/projects", headers=self._company_headers(company_id)
         )
         response.raise_for_status()
         return response.json()["items"]
+
+    def create_project(
+        self, company_id: UUID, client_id: UUID, name: str
+    ) -> dict[str, object]:
+        response = self._client.post(
+            "/api/v1/projects",
+            headers=self._company_headers(company_id),
+            json={"client_id": str(client_id), "name": name},
+        )
+        self._raise_operation_error(response, "Não foi possível criar o projeto.")
+        return response.json()
 
     def heartbeat(
         self,
@@ -140,6 +166,17 @@ class HttpBackendGateway(BackendGateway):
     @staticmethod
     def _company_headers(company_id: UUID) -> dict[str, str]:
         return {"X-Company-ID": str(company_id)}
+
+    @staticmethod
+    def _raise_operation_error(response: httpx.Response, fallback: str) -> None:
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            try:
+                detail = str(response.json().get("detail", "")).strip()
+            except (TypeError, ValueError):
+                detail = ""
+            raise BackendOperationError(detail or fallback) from exc
 
     @staticmethod
     def _command(item: dict[str, object]) -> AgentCommand:

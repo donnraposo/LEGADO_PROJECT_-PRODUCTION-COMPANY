@@ -147,6 +147,29 @@ Ao retomar este projeto:
 
 ## 41. Histórico do documento
 
+### 21 de agosto de 2026 — versão 0.33
+
+- corrigido o ciclo de vida das tarefas do `QThreadPool`, mantendo-as até o sinal final;
+- registrado o ensaio real em que a empresa foi criada com HTTP `201`, mas a interface
+  permaneceu em processamento antes da correção;
+- registro da máquina tornou-se automático após selecionar ou criar uma empresa;
+- removido do fluxo normal o botão `Conectar máquina`; `Tentar novamente` aparece
+  somente quando o registro falha;
+- suíte do agente ampliada para 31 testes, com Ruff aprovado;
+- instalador `0.1.1` existente não contém as correções mais recentes e não deve ser
+  tratado como nova baseline até recompilação autorizada;
+- Fase 6 permanece planejada; próxima implementação começa por contratos, adaptador
+  local simulado e persistência de uploads antes da integração OAuth real.
+
+### 21 de agosto de 2026 — versão 0.32
+
+- agente passou a criar empresa, cliente e múltiplos projetos pela API central;
+- criação da empresa mantém atribuição automática de Proprietário no backend;
+- todo projeto continua obrigatoriamente vinculado a um cliente;
+- seletores são atualizados imediatamente e projetos são filtrados pelo cliente;
+- Ruff, 29 testes do agente e 6 testes de integração backend foram aprovados;
+- validação visual e detecção automática de discos permanecem pendentes.
+
 ### 19 de agosto de 2026 — versão 0.31
 
 - concluído tecnicamente o último item da Fase 4 com abertura contextual do catálogo;

@@ -1,5 +1,5 @@
 #define AppName "Agente Local LEGADO"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.1"
 #define AppPublisher "LEGADO"
 #define AppExecutable "LegadoAgent.exe"
 

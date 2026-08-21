@@ -1,6 +1,6 @@
 # Continuidade do MVP
 
-**Atualizado em:** 19 de agosto de 2026.
+**Atualizado em:** 21 de agosto de 2026.
 
 Documento operacional para qualquer pessoa ou IA retomar o projeto sem depender do
 histórico de conversas. Regras de negócio e decisões arquiteturais continuam nos
@@ -54,6 +54,10 @@ retornar ao último commit.
 - token OIDC somente em memória;
 - heartbeat, polling e ciclo de comandos;
 - seleção autenticada de empresa, cliente e projeto;
+- criação de empresa, cliente e múltiplos projetos pelos fluxos oficiais da API;
+- registro automático da máquina após seleção da empresa;
+- botão `Tentar novamente` exibido somente se o registro da máquina falhar;
+- tarefas HTTP retidas até a entrega do resultado à interface Qt;
 - seleção de arquivos e pastas;
 - exclusão de itens técnicos, temporários, links e junções;
 - metadados básicos e data do sistema de arquivos;
@@ -79,13 +83,19 @@ retornar ao último commit.
 
 ### Agente — última baseline
 
-- 26 testes aprovados;
+- 31 testes aprovados;
 - Ruff aprovado;
 - SQLite v1→v3 validado sem perder o identificador da instalação;
 - conteúdo e horário dos arquivos de origem preservados;
 - cancelamento e recuperação da prévia validados;
 - limites arquiteturais validados;
 - testes executados no runtime auxiliar Python 3.12.
+- 6 testes backend das coleções de empresas, clientes e projetos aprovados.
+- login OIDC e criação real de empresa chegaram ao backend com HTTP `201`;
+- o ensaio revelou perda do retorno assíncrono na interface; a tarefa passou a ser
+  retida até o sinal final e a regressão foi coberta automaticamente;
+- o instalador `0.1.1` existente antecede as correções assíncronas e de conexão
+  automática; usar o código-fonte até uma recompilação explicitamente autorizada.
 
 ### Frontend — primeira baseline
 
@@ -109,13 +119,15 @@ retornar ao último commit.
 
 ## Próxima implementação
 
-Validar o fluxo já implementado e continuar a Fase 5:
+Preservar as pendências de validação e iniciar a fundação da Fase 6:
 
-1. criar conta, empresa, cliente, projeto e dados de teste;
-2. validar login real do frontend e do agente com Keycloak;
-3. validar visualmente o fluxo completo no Windows/Python 3.14;
-4. testar interrupção por mídia removível e retomada do catálogo;
-5. implementar no frontend clientes, projetos, acessos, máquinas e operações.
+1. revalidar pela interface a conclusão da criação e a conexão automática da máquina;
+2. implementar contratos de armazenamento e adaptador local simulado do Drive;
+3. modelar conta, lote, item, tentativa e checkpoint de upload;
+4. manter o binário fora do backend e preparar sessão retomável direta agente–Drive;
+5. implementar detecção automática de discos externos no agente;
+6. validar visualmente o fluxo completo no Windows/Python 3.14;
+7. recompilar o instalador somente após nova autorização e validação do código-fonte.
 
 ## Critérios obrigatórios da Fase 4
 

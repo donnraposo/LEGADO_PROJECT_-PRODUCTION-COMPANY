@@ -7,6 +7,7 @@ class TaskSignals(QObject):
     succeeded = Signal(object)
     failed = Signal(str)
     progress = Signal(int, int)
+    finished = Signal()
 
 
 class BackgroundTask(QRunnable):
@@ -21,3 +22,5 @@ class BackgroundTask(QRunnable):
             self.signals.succeeded.emit(self._operation())
         except Exception as exc:
             self.signals.failed.emit(str(exc))
+        finally:
+            self.signals.finished.emit()

@@ -83,12 +83,30 @@ os clientes locais do Keycloak foram declarados e a composição Docker foi vali
 Permanece pendente o ensaio manual completo com Python 3.14, conta, empresa e Keycloak
 ativos, pois não existe `.env.dev` nesta estação.
 
+**Incremento implementado em 21 de agosto de 2026:** o agente passou a criar empresa,
+cliente e múltiplos projetos pela API central, atualizar os seletores imediatamente e
+filtrar projetos pelo cliente ativo. Nomes vazios são rejeitados, solicitações ficam
+bloqueadas durante o processamento e falhas recebem mensagem segura. Ruff, 29 testes
+do agente e 6 testes de integração backend foram aprovados.
+
+**Correção implementada em 21 de agosto de 2026:** tarefas executadas no `QThreadPool`
+passaram a ser mantidas pela janela até a entrega do sinal final. O defeito foi observado
+em um ensaio real no qual o backend criou a empresa com HTTP `201`, mas a interface
+permaneceu em processamento. O registro da máquina também passou a ocorrer
+automaticamente depois da seleção da empresa; `Tentar novamente` aparece somente após
+falha. A suíte do agente chegou a 31 testes e Ruff permaneceu aprovado.
+
+O instalador `0.1.1` disponível foi gerado antes dessas duas correções. A execução de
+validação deve usar o código-fonte até uma nova compilação autorizada.
+
 - scaffold Python/PySide6 e empacotamento inicial;
 - identificador persistente da instalação;
 - SQLite e migrations locais;
 - login OIDC/PKCE, com token somente em memória;
 - heartbeat, polling, confirmação e resultado;
 - fila persistente, logs protegidos e interface inicial.
+- criação guiada de empresa, cliente e múltiplos projetos.
+- conexão automática da máquina e recuperação explícita somente após falha.
 
 **Aceite:** máquina autentica, aparece online, recebe comando e preserva a fila; reinício exige novo login.
 
@@ -164,6 +182,8 @@ O login real e o uso com dados reais ainda aguardam ensaio manual.
 
 **Estado:** PLANEJADO.
 
+- contratos abstratos e adaptador local simulado para testes comuns;
+- modelos de conta, lote, item, tentativa e checkpoint;
 - conta e pasta isolada com escopo `drive.file`;
 - estrutura por cliente, projeto e data;
 - sessão retomável e checkpoint SQLite;
