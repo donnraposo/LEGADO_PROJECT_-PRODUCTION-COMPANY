@@ -1,5 +1,7 @@
 # Uploads, aprovações e Drive
 
+**Produto:** Gerenciador de Áudio Visual.
+
 Estados, controles, retomada, integridade, contas e conflitos de upload.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.
@@ -57,6 +59,10 @@ O usuário poderá:
 Não haverá controle manual de velocidade nesta fase.
 
 O mesmo arquivo não poderá participar de duas filas ativas simultaneamente.
+
+Cada lote ficará vinculado à conta Google ativa no momento de sua criação. Trocar a
+conta não moverá arquivos existentes nem retomará na nova conta uma sessão iniciada
+na anterior. Arquivos ainda não iniciados exigirão novo direcionamento explícito.
 
 ### Agendamento
 

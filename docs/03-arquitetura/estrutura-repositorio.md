@@ -1,5 +1,9 @@
 # Estrutura do repositório e módulos
 
+**Produto:** Gerenciador de Áudio Visual.
+
+O repositório físico oficial permanece em `D:\PROJETOS\LEGADO`.
+
 **Estado:** APROVADO em 31 de julho de 2026.
 
 ## Decisões estruturais
@@ -71,6 +75,18 @@ backend/src/modules/
 ```
 
 Cada módulo será uma unidade funcional independente. A divisão não representa microserviços e não autoriza bancos separados.
+
+### Estado físico atual
+
+Já existem módulos funcionais para identidade, empresas, projetos, auditoria,
+notificações, catálogo, operações e Drive. Os módulos de upload, aprovações e
+downloads permanecem previstos e serão criados somente quando suas respectivas
+fatias forem implementadas.
+
+No Drive já estão implementados o estado OAuth, a conta ativa da empresa, a API
+de autorização, callback, consulta e desconexão e o gateway Google. A próxima
+evolução deverá acrescentar histórico de contas, pastas idempotentes, lotes,
+itens, tentativas e checkpoints sem quebrar esses contratos.
 
 ### Estrutura interna de um módulo
 
@@ -150,6 +166,10 @@ web/src/
 ```
 
 Cada módulo poderá conter `components`, `pages`, `hooks`, `services`, `schemas` e `tests`, criados somente quando necessários. Componentes, hooks e serviços principais terão arquivos próprios. Clientes OpenAPI gerados ficarão isolados e não serão editados manualmente.
+
+O frontend físico atual já possui autenticação, catálogo e painel do Google
+Drive. A gestão web completa de empresas, projetos, máquinas, operações e
+auditoria continua pendente.
 
 ## Contratos e automações
 

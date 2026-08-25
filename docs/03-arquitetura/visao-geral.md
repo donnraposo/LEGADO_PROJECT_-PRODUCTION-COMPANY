@@ -1,5 +1,7 @@
 # Visão geral da arquitetura
 
+**Sistema:** Gerenciador de Áudio Visual.
+
 Componentes, responsabilidades e fluxo funcional aprovado.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.

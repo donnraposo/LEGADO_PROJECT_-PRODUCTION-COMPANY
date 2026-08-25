@@ -7,6 +7,7 @@ import { BackendClient } from "../../shared/api/backendClient";
 import type { MediaFile } from "../../shared/api/types";
 import { formatFileSize } from "../../shared/format/fileSize";
 import { MediaEditor } from "./MediaEditor";
+import { DriveConnectionPanel } from "../drive/DriveConnectionPanel";
 
 export function CatalogWorkspacePage() {
   const { companyId: routeCompanyId, projectId: routeProjectId } = useParams();
@@ -106,7 +107,7 @@ export function CatalogWorkspacePage() {
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark">L</span>
-          <div><strong>LEGADO</strong><small>Acervo audiovisual</small></div>
+          <div><strong>GERENCIADOR DE ÁUDIO VISUAL</strong><small>Acervo audiovisual</small></div>
         </div>
         <div className="session-area">
           <span className="online-dot" />
@@ -144,7 +145,7 @@ export function CatalogWorkspacePage() {
         </label>
         <nav aria-label="Navegação principal">
           <a className="nav-item active" href="#catalogo"><span>▦</span> Catálogo</a>
-          <span className="nav-item disabled"><span>↑</span> Envios <small>em breve</small></span>
+          <a className="nav-item" href="#google-drive"><span>↑</span> Envios</a>
           <span className="nav-item disabled"><span>◎</span> Máquinas <small>em breve</small></span>
           <span className="nav-item disabled"><span>☰</span> Auditoria <small>em breve</small></span>
         </nav>
@@ -162,6 +163,12 @@ export function CatalogWorkspacePage() {
 
         {error && <div className="alert error-message">{error.message}</div>}
         {notice && <div className="alert success-message">{notice}</div>}
+
+        <DriveConnectionPanel
+          api={api}
+          companyId={companyId}
+          isOwner={currentCompany?.role === "OWNER"}
+        />
 
         <section className="summary-grid" aria-label="Resumo do catálogo">
           <article><span>Arquivos encontrados</span><strong>{media.data?.items.length ?? 0}</strong></article>

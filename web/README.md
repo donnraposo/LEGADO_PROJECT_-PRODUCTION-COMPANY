@@ -1,4 +1,4 @@
-# Frontend LEGADO
+# Frontend — Gerenciador de Áudio Visual
 
 Interface operacional do MVP em React, TypeScript e Vite.
 

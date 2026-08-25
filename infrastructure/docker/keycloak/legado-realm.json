@@ -1,7 +1,7 @@
 {
   "realm": "legado",
   "enabled": true,
-  "displayName": "LEGADO",
+  "displayName": "Gerenciador de Áudio Visual",
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
   "loginWithEmailAllowed": true,
@@ -10,14 +10,14 @@
   "clients": [
     {
       "clientId": "legado-api",
-      "name": "LEGADO API",
+      "name": "Gerenciador de Áudio Visual API",
       "enabled": true,
       "protocol": "openid-connect",
       "bearerOnly": true
     },
     {
       "clientId": "legado-agent",
-      "name": "LEGADO Agent",
+      "name": "Gerenciador de Áudio Visual — Agente",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": true,
@@ -48,7 +48,7 @@
     },
     {
       "clientId": "legado-web",
-      "name": "LEGADO Web",
+      "name": "Gerenciador de Áudio Visual — Web",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": true,

@@ -1,6 +1,6 @@
 # Roadmap do MVP funcional
 
-**Estado:** EM IMPLEMENTAÇÃO. Atualizado em 19 de agosto de 2026.
+**Estado:** EM IMPLEMENTAÇÃO. Atualizado em 25 de agosto de 2026.
 
 **Início:** 3 de agosto de 2026.
 
@@ -180,7 +180,16 @@ O login real e o uso com dados reais ainda aguardam ensaio manual.
 
 ## Fase 6 — upload retomável ao Drive
 
-**Estado:** PLANEJADO.
+**Estado:** EM IMPLEMENTAÇÃO — FUNDAÇÃO OAUTH CONCLUÍDA EM 25 DE AGOSTO DE 2026.
+
+**Incremento implementado:** autorização e callback no backend, estado temporário de
+uso único, refresh token criptografado, isolamento por empresa, permissão de
+Proprietário, endpoints de estado/desconexão e painel correspondente no frontend.
+Credenciais reconhecidas pelo Google e conexão real concluída em 25 de agosto de
+2026. Estrutura de pastas, lotes e upload permanecem como a próxima fatia.
+
+O modelo atual representa somente a conta ativa. Antes dos lotes será necessário
+preservar contas anteriormente utilizadas e vincular cada lote à conta de destino.
 
 - contratos abstratos e adaptador local simulado para testes comuns;
 - modelos de conta, lote, item, tentativa e checkpoint;
@@ -191,9 +200,17 @@ O login real e o uso com dados reais ainda aguardam ensaio manual.
 - pausa, retomada e cancelamento;
 - confirmação de bytes, identificador, tamanho e integridade;
 - objeto do Drive e sincronização do catálogo;
-- tratamento de internet, dispositivo e limite de 5 TB.
+- tratamento de internet, dispositivo e limite de 5 TB;
+- frontend para conectar a conta Google sem expor credenciais — implementado;
+- criação e acompanhamento de lotes pelo frontend;
+- progresso geral e individual por arquivo, inicialmente por polling;
+- pausa, retomada e cancelamento pelo frontend, aplicados no próximo bloco seguro;
+- estados e erros apresentados em linguagem simples e acionável.
 
-**Aceite:** backend não transporta o binário, repetição não duplica upload e disponibilidade exige confirmação consistente.
+**Aceite:** backend não transporta o binário, repetição não duplica upload,
+disponibilidade exige confirmação consistente e o usuário autorizado consegue conectar
+a conta, criar e controlar lotes, acompanhar o progresso e compreender as falhas sem
+acesso a refresh token, credencial ou URL retomável.
 
 ## Fase 7 — tempo real e reconciliação
 

@@ -1,4 +1,4 @@
-import type { Collection, Company, CurrentUser, MediaFile, Project, Tag } from "./types";
+import type { Collection, Company, CurrentUser, DriveAccount, DriveAuthorization, MediaFile, Project, Tag } from "./types";
 
 type TokenProvider = () => Promise<string>;
 
@@ -51,6 +51,22 @@ export class BackendClient {
       { method: selected ? "PUT" : "DELETE" },
       companyId,
     );
+  }
+
+  driveAccount(companyId: string) {
+    return this.request<DriveAccount>("/api/v1/drive/account", {}, companyId);
+  }
+
+  startDriveAuthorization(companyId: string) {
+    return this.request<DriveAuthorization>(
+      "/api/v1/drive/oauth/authorization",
+      { method: "POST" },
+      companyId,
+    );
+  }
+
+  disconnectDrive(companyId: string) {
+    return this.request<void>("/api/v1/drive/account", { method: "DELETE" }, companyId);
   }
 
   private async request<T>(path: string, init: RequestInit = {}, companyId?: string): Promise<T> {

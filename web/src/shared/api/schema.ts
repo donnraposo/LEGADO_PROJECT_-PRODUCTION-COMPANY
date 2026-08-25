@@ -4,6 +4,58 @@
  */
 
 export interface paths {
+    "/api/v1/drive/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta a conexão Google Drive da empresa */
+        get: operations["getDriveAccount"];
+        put?: never;
+        post?: never;
+        /** Desconecta a conta Google Drive da empresa como Proprietário */
+        delete: operations["disconnectDriveAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive/oauth/authorization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Inicia a autorização Google como Proprietário */
+        post: operations["startDriveAuthorization"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive/oauth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recebe o retorno de autorização do Google */
+        get: operations["completeDriveAuthorization"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events": {
         parameters: {
             query?: never;
@@ -463,6 +515,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DriveAccount: {
+            connected: boolean;
+            /** Format: email */
+            account_email: string | null;
+            /** Format: date-time */
+            connected_at: string | null;
+        };
+        DriveAuthorization: {
+            /** Format: uri */
+            authorization_url: string;
+        };
         CreateMediaFile: {
             /** Format: uuid */
             project_id: string;
@@ -715,6 +778,99 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getDriveAccount: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Estado da conexão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveAccount"];
+                };
+            };
+        };
+    };
+    disconnectDriveAccount: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conta desconectada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    startDriveAuthorization: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description URL oficial de autorização do Google */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveAuthorization"];
+                };
+            };
+            /** @description Credenciais OAuth ainda não configuradas */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    completeDriveAuthorization: {
+        parameters: {
+            query?: {
+                code?: string;
+                state?: string;
+                error?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Retorno ao frontend com resultado sem credenciais */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listAuditEvents: {
         parameters: {
             query?: never;

@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "modules.notifications.apps.NotificationsConfig",
     "modules.catalog.apps.CatalogConfig",
     "modules.operations.apps.OperationsConfig",
+    "modules.drive.apps.DriveConfig",
 ]
 
 MIDDLEWARE = [
@@ -143,6 +144,16 @@ PERSONAL_DATA_ENCRYPTION_KEYS = [
     if key.strip()
 ]
 PERSONAL_DATA_HMAC_KEY = os.environ.get("PERSONAL_DATA_HMAC_KEY", "")
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get(
+    "GOOGLE_OAUTH_REDIRECT_URI",
+    "http://127.0.0.1:8000/api/v1/drive/oauth/callback",
+)
+GOOGLE_OAUTH_FRONTEND_RETURN_URL = os.environ.get(
+    "GOOGLE_OAUTH_FRONTEND_RETURN_URL",
+    "http://127.0.0.1:5173/",
+)
 INVITATION_PUBLIC_URL = os.environ.get(
     "INVITATION_PUBLIC_URL", "http://127.0.0.1:5173/invitations/accept"
 )

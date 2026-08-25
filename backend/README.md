@@ -1,10 +1,12 @@
 # Backend
 
+Backend central do **Gerenciador de Áudio Visual**.
+
 Backend central em Python, Django e Django REST Framework, organizado como monólito modular com Clean Architecture.
 
 O servidor ASGI aprovado é Daphne. A estrutura interna segue [Estrutura do repositório e módulos](../docs/03-arquitetura/estrutura-repositorio.md).
 
-## Comandos planejados
+## Comandos de desenvolvimento
 
 ```text
 python -m pip install -e ".[dev]"

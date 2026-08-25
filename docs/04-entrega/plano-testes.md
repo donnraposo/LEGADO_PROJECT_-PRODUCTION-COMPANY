@@ -52,12 +52,40 @@ entrega assíncrona, liberação da tarefa, heartbeat automático e recuperaçã
 Ruff permaneceu aprovado. A revalidação visual do código corrigido está pendente.
 
 **Estado:** EM EXECUÇÃO. Baselines do backend e do agente registradas até 21 de agosto
-de 2026; próximas validações são os ensaios funcionais das Fases 2 a 5 com conta e
-dados reais.
+de 2026. Em 25 de agosto, o OAuth recebeu 3 testes de integração, o cliente foi
+reconhecido pelo endpoint do Google, a URL foi validada com `drive.file`, acesso
+offline e `state`, e uma conta real foi conectada pelo frontend. A nova marca passou
+na geração OpenAPI, checagem TypeScript, build Vite, JSON do Keycloak e saúde dos
+containers. O teste da janela renomeada permanece pendente por indisponibilidade do
+inicializador Python neste terminal.
 
 Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empresas, contratos de API, idempotência, retomada de upload, integração com Drive, segurança, auditoria e fluxos ponta a ponta.
 
+## Cobertura obrigatória do frontend de upload
+
+- somente Proprietário conecta ou troca a conta Google configurada;
+- credenciais, refresh token e URL retomável não aparecem em estado, resposta ou log;
+- usuário autorizado cria lote somente para projeto acessível;
+- lista apresenta progresso geral e progresso individual por arquivo;
+- polling não regride estado nem duplica comando;
+- recarregar a página recupera o estado persistido no backend;
+- pausa, retomada e cancelamento são idempotentes;
+- comando aceito é aplicado pelo agente no próximo bloco seguro;
+- estados de autenticação, internet, disco, cota, espaço e integridade possuem mensagem
+  simples, causa resumida e ação disponível;
+- arquivo somente aparece concluído depois da confirmação consistente do Drive e catálogo;
+- falhas de API não exibem payload técnico, token ou segredo ao usuário.
+
 ## Cobertura incremental atual
+
+- início do OAuth permitido somente ao Proprietário;
+- estado OAuth consumido uma única vez;
+- refresh token persistido exclusivamente de forma criptografada;
+- resposta de estado não contém token;
+- callback devolve ao frontend apenas sucesso ou erro;
+- 3 testes de integração OAuth aprovados em 25 de agosto de 2026;
+- credenciais OAuth reconhecidas pelo Google e autorização real concluída pelo frontend;
+- criação de pastas e upload real permanecem pendentes e usarão conteúdo descartável.
 
 - normalização de nomes de clientes e projetos;
 - criação dentro da empresa ativa;

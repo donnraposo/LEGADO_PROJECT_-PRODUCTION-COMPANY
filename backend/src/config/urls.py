@@ -12,4 +12,5 @@ urlpatterns = [
     path("api/v1/", include("modules.audit.urls")),
     path("api/v1/", include("modules.catalog.urls")),
     path("api/v1/", include("modules.operations.urls")),
+    path("api/v1/", include("modules.drive.urls")),
 ]

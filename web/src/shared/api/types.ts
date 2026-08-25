@@ -16,3 +16,13 @@ export interface Collection<T> {
   items: T[];
   next_cursor?: string | null;
 }
+
+export interface DriveAccount {
+  connected: boolean;
+  account_email: string | null;
+  connected_at: string | null;
+}
+
+export interface DriveAuthorization {
+  authorization_url: string;
+}

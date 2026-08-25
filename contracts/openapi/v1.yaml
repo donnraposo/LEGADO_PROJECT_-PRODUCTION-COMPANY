@@ -1,13 +1,67 @@
 openapi: 3.1.0
 info:
-  title: LEGADO API
+  title: Gerenciador de Áudio Visual API
   version: 0.1.0
-  description: Contrato inicial da API central da plataforma LEGADO.
+  description: Contrato da API central do Gerenciador de Áudio Visual.
 servers:
   - url: /
 security:
   - keycloak: []
 paths:
+  /api/v1/drive/account:
+    get:
+      operationId: getDriveAccount
+      summary: Consulta a conexão Google Drive da empresa
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Estado da conexão
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriveAccount"
+    delete:
+      operationId: disconnectDriveAccount
+      summary: Desconecta a conta Google Drive da empresa como Proprietário
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "204":
+          description: Conta desconectada
+  /api/v1/drive/oauth/authorization:
+    post:
+      operationId: startDriveAuthorization
+      summary: Inicia a autorização Google como Proprietário
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: URL oficial de autorização do Google
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriveAuthorization"
+        "503":
+          description: Credenciais OAuth ainda não configuradas
+  /api/v1/drive/oauth/callback:
+    get:
+      operationId: completeDriveAuthorization
+      summary: Recebe o retorno de autorização do Google
+      security: []
+      parameters:
+        - name: code
+          in: query
+          schema: {type: string}
+        - name: state
+          in: query
+          schema: {type: string}
+        - name: error
+          in: query
+          schema: {type: string}
+      responses:
+        "302":
+          description: Retorno ao frontend com resultado sem credenciais
   /api/v1/audit-events:
     get:
       operationId: listAuditEvents
@@ -641,6 +695,27 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    DriveAccount:
+      type: object
+      additionalProperties: false
+      required: [connected, account_email, connected_at]
+      properties:
+        connected:
+          type: boolean
+        account_email:
+          type: [string, "null"]
+          format: email
+        connected_at:
+          type: [string, "null"]
+          format: date-time
+    DriveAuthorization:
+      type: object
+      additionalProperties: false
+      required: [authorization_url]
+      properties:
+        authorization_url:
+          type: string
+          format: uri
     CreateMediaFile:
       type: object
       additionalProperties: false

@@ -1,4 +1,4 @@
-# Projeto Audiovisual
+# Gerenciador de Áudio Visual
 
 Índice conciso da documentação arquitetural. Leia somente os blocos relacionados à tarefa atual.
 
@@ -9,7 +9,10 @@
 - Implementação do software: **iniciada e autorizada em 1º de agosto de 2026**.
 - Fases 0 e 1 do MVP: **validadas**.
 - Fases 2 e 3 do MVP: **implementadas e aguardando validação funcional**.
-- Próxima implementação: **Fase 4 — organização local segura**.
+- Fase 4: **tecnicamente concluída e aguardando ensaio funcional**.
+- Fase 5: **frontend executável no Docker**.
+- Fase 6: **em implementação; OAuth Google conectado e validado**.
+- Próxima implementação: **estrutura de pastas, lotes e upload retomável no Drive**.
 - Documento original: [monólito v0.12 preservado](docs/arquivo/PROJETO_AUDIOVISUAL_MONOLITO_v0.12.md).
 
 ## Leitura rápida
