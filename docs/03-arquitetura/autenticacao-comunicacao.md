@@ -1,5 +1,7 @@
 # Autenticação e comunicação
 
+**Produto:** Gerenciador de Áudio Visual.
+
 Sessões do frontend e agente, comunicação agente–backend e segurança.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.
@@ -31,6 +33,14 @@ Sessões do frontend e agente, comunicação agente–backend e segurança.
 - frontend e agente poderão participar da mesma sessão autenticada;
 - Django validará sessão, empresa e permissões antes de comandos sensíveis;
 - bloqueio, saída da empresa ou perda de acesso impedirá novos comandos e interromperá operações no próximo bloco seguro.
+
+#### OAuth do Google Drive implementado
+
+- somente o backend troca o código de autorização por credenciais;
+- o frontend recebe apenas a URL inicial e o resultado final `connected` ou `error`;
+- estado OAuth é temporário, persistido como hash e consumido uma única vez;
+- refresh token nunca é entregue ao frontend ou ao agente;
+- conexão e desconexão exigem papel Proprietário na empresa ativa.
 
 
 ### Comunicação agente–backend aprovada

@@ -1,4 +1,4 @@
-# Agente local
+# Agente local — Gerenciador de Áudio Visual
 
 Aplicativo Windows em Python 3.14 e PySide6 responsável pela fila local e pela execução autenticada de comandos persistidos pelo backend.
 

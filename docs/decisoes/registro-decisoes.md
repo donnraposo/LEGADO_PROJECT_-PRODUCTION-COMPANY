@@ -147,6 +147,45 @@ Ao retomar este projeto:
 
 ## 41. Histórico do documento
 
+As entradas abaixo registram o estado existente na data de cada decisão. Para o
+estado atual, prevalecem a entrada mais recente e os documentos de entrega.
+
+### 25 de agosto de 2026 — versão 0.36
+
+- relida e consolidada a documentação temática, arquitetural e operacional;
+- oficializado `Gerenciador de Áudio Visual` como nome do produto em documentos e READMEs;
+- registrada a autorização OAuth real concluída e removidas pendências antigas de credenciais;
+- documentada a troca futura de conta Google: uma ativa por empresa e lote vinculado
+  à conta de destino, sem mover arquivos já enviados;
+- registrado que o modelo atual ainda não preserva histórico de contas anteriores;
+- definida como próxima fatia a confirmação da árvore de pastas, seguida por
+  persistência de pastas, lotes, tentativas e checkpoints;
+- mantidos como pendentes upload real, retomada, cota, integridade e conciliação.
+
+### 25 de agosto de 2026 — versão 0.35
+
+- iniciada a implementação da Fase 6 pelo fluxo OAuth do Google Drive;
+- mantido o escopo mínimo `drive.file` e a troca de código exclusivamente no backend;
+- definido estado OAuth aleatório, armazenado como hash, válido por dez minutos e de uso único;
+- definido refresh token criptografado e isolado por empresa;
+- limitada conexão e desconexão ao Proprietário, mantendo consulta para membros;
+- registrado que lotes e upload retomável são o próximo incremento e que o ensaio
+  real depende das credenciais do Google Cloud.
+
+### 25 de agosto de 2026 — versão 0.34
+
+- frontend de upload incluído como parte obrigatória da Fase 6 e do aceite do MVP;
+- Proprietário conectará a conta Google pelo frontend, mantendo OAuth e refresh token
+  exclusivamente no backend;
+- usuários autorizados poderão criar e acompanhar lotes, visualizar progresso geral e
+  individual e solicitar pausa, retomada ou cancelamento;
+- controles serão persistidos e aplicados pelo agente no próximo bloco seguro;
+- polling será usado inicialmente; WebSocket permanece planejado para a Fase 7;
+- recarregar a página deverá recuperar o estado central do lote;
+- erros de autenticação, internet, dispositivo, cota, espaço e integridade deverão ser
+  exibidos em linguagem simples e com ação disponível;
+- credenciais, refresh token e URL retomável são proibidos no navegador e nos logs.
+
 ### 21 de agosto de 2026 — versão 0.33
 
 - corrigido o ciclo de vida das tarefas do `QThreadPool`, mantendo-as até o sinal final;

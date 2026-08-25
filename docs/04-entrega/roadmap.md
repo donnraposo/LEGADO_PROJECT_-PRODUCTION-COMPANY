@@ -4,7 +4,7 @@
 
 > Para retomada por outra pessoa ou IA, use [Continuidade do MVP](continuidade-mvp.md).
 
-**Atualizado em:** 19 de agosto de 2026.
+**Atualizado em:** 25 de agosto de 2026.
 
 ## Concluído e aprovado
 
@@ -12,7 +12,7 @@
 - stack do frontend, backend e agente local;
 - Clean Architecture, Clean Code, SOLID e uma classe por arquivo;
 - autenticação e comunicação agente–backend;
-- integração OAuth e upload retomável no Google Drive;
+- arquitetura de OAuth e upload retomável no Google Drive;
 - estratégia inicial sem serviços pagos obrigatórios;
 - responsabilidades e contratos do n8n;
 - filas, retomada, concorrência e idempotência;
@@ -26,6 +26,9 @@
 
 ## Próxima etapa
 
+OAuth real do Google Drive concluído. A próxima etapa executável é criar a estrutura
+idempotente de pastas, modelar lotes e preparar o upload retomável direto do agente.
+
 ### Implementação incremental em andamento
 
 - concluída a base inicial de identidade e empresas;
@@ -33,7 +36,7 @@
 - concluídos convites, gestão básica de membros e atribuição de projetos;
 - concluídas auditoria administrativa imutável e entrega assíncrona de convites;
 - concluídas consulta de auditoria e concorrência otimista inicial para membros;
-- em andamento a migração das demais operações para casos de uso e portas.
+- em andamento a migração das demais operações para casos de uso e portas;
 - concluída a migração de alteração de membros e acessos de projeto para casos de uso.
 - concluída a migração do aceite de convites para caso de uso e portas.
 - concluída a migração do cancelamento de convites para caso de uso e portas.
@@ -58,7 +61,10 @@
 - implementadas análise, checksum, conflitos e prévia local recuperável;
 - validar a interface em Python 3.14 e arquitetar a organização local segura;
 - próxima implementação: confirmação, resolução de conflitos, checkpoints e movimentação sem sobrescrita;
-- frontend web permanece planejado após a organização local segura.
+- concluída a organização local segura com confirmação, checkpoints e retomada;
+- implementado o frontend inicial com autenticação, catálogo e painel do Drive;
+- validada a conexão OAuth com uma conta Google real;
+- próxima implementação: árvore idempotente de pastas, histórico de contas e lotes.
 
 Concluir a infraestrutura além da base local já validada:
 
@@ -69,21 +75,20 @@ Concluir a infraestrutura além da base local já validada:
 5. logs técnicos, métricas, rastreamento e alertas;
 6. transformar a política aprovada de backup e recuperação em procedimentos executáveis.
 
-## Depois da infraestrutura
+## Depois da base atual
 
-1. metodologia e plano incremental de implementação;
-2. plano detalhado de testes e critérios de aceite por etapa;
-3. preparação dos ambientes;
-4. criação controlada do esqueleto do monorepo;
-5. implementação por módulos e casos de uso.
+1. concluir pastas, lotes e upload retomável;
+2. adicionar acompanhamento em tempo real e comandos de pausa, retomada e cancelamento;
+3. concluir aprovações, compartilhamento e downloads;
+4. executar a validação integral do MVP e preparar a operação piloto.
 
 ## Pendências conhecidas
 
 - validação futura com Google Workspace e Drive Compartilhado;
 - revisão de licenças antes da primeira produtora externa;
 - detalhamento da composição Docker e armazenamento S3 compatível opcional;
-- plano detalhado de testes;
-- implementação dos módulos de domínio.
+- procedimento operacional de backup e recuperação;
+- fechamento dos módulos de upload, aprovações e downloads.
 
 ## Autorização
 

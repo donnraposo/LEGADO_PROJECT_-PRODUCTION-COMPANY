@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         self._current_batch = None
         self._current_items = []
         self._analysis_item_ids: dict[int, UUID] = {}
-        self.setWindowTitle("LEGADO — Agente local")
+        self.setWindowTitle("Gerenciador de Áudio Visual — Agente local")
         self.resize(1180, 720)
         self._build_interface()
         self._timer = QTimer(self)

@@ -1,5 +1,10 @@
 # Integração com Google Drive
 
+**Produto:** Gerenciador de Áudio Visual.
+
+**Estado atual:** OAuth implementado e validado com conta Google real em 25 de
+agosto de 2026. Estrutura de pastas, lotes e upload retomável permanecem pendentes.
+
 Propriedade, OAuth, upload retomável, custos e limites do ambiente de testes.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.
@@ -13,6 +18,12 @@ Propriedade, OAuth, upload retomável, custos e limites do ambiente de testes.
 - a aplicação não usará como armazenamento principal o `Meu Drive` de uma pessoa;
 - contas adicionais poderão ser associadas futuramente por decisão de Proprietário.
 
+No MVP, uma empresa terá uma conta Google ativa por vez. O Proprietário poderá
+desconectar uma conta cheia e conectar outra. A troca afetará somente novos lotes:
+arquivos existentes permanecerão na conta anterior e cada lote registrará a conta
+de destino utilizada. Conta pessoal é permitida apenas para desenvolvimento;
+Google Workspace e Drive Compartilhado continuam como objetivo de produção.
+
 #### OAuth e credenciais
 
 - o backend Django será a autoridade sobre as credenciais do Google;
@@ -21,6 +32,34 @@ Propriedade, OAuth, upload retomável, custos e limites do ambiente de testes.
 - o agente não terá acesso à credencial OAuth central;
 - n8n não armazenará a credencial principal do Google;
 - segredos e tokens nunca aparecerão em logs, auditoria ou frontend.
+- o backend usa Authorization Code, estado aleatório persistido como hash, validade
+  de dez minutos e consumo único;
+- refresh token e e-mail da conta são criptografados no PostgreSQL;
+- somente Proprietário conecta ou desconecta a conta;
+- desconectar elimina imediatamente a credencial local; revogação remota no Google
+  permanece pendente no adaptador real.
+
+#### Estrutura proposta para a próxima implementação
+
+```text
+Gerenciador de Áudio Visual/
+└── Cliente/
+    └── Projeto/
+        └── Ano/
+            └── Mês/
+                └── Dia/
+                    └── arquivos
+```
+
+Esta árvore ainda depende de confirmação explícita antes da implementação. As pastas
+serão criadas sob demanda e reutilizadas pelo identificador do Drive. O
+PostgreSQL armazenará os IDs, a conta e o vínculo empresarial; nomes não serão usados
+isoladamente como identidade. A operação será idempotente e nunca substituirá
+silenciosamente um arquivo existente.
+
+O modelo atual mantém somente a conexão ativa da empresa e ainda não preserva o
+histórico necessário de contas anteriores. Esse histórico deverá ser modelado antes
+dos lotes para impedir retomada em conta diferente.
 
 #### Escopo funcional
 

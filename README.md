@@ -1,12 +1,13 @@
-# LEGADO — Plataforma de Produção Audiovisual
+# Gerenciador de Áudio Visual — Plataforma de Produção Audiovisual
 
 Plataforma para organização local, catalogação, upload retomável e gestão segura de acervos audiovisuais.
 
 ## Estado
 
-O MVP está em implementação. As Fases 0 e 1 estão validadas; as Fases 2 e 3 estão
-implementadas e aguardam validação funcional no ambiente oficial; a Fase 4 —
-organização local segura — é a próxima implementação planejada.
+O MVP está em implementação. A base de identidade, empresas, projetos, catálogo,
+operações, agente local, frontend e OAuth do Google Drive já foi construída. A
+próxima entrega é a estrutura idempotente de pastas, seguida de lotes e upload
+retomável direto do agente para o Drive.
 
 Para retomar o desenvolvimento, comece por [Continuidade do MVP](docs/04-entrega/continuidade-mvp.md)
 e depois consulte o [índice arquitetural](PROJETO_AUDIOVISUAL.md).

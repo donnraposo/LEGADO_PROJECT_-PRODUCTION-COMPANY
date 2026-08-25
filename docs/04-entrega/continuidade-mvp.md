@@ -1,6 +1,8 @@
 # Continuidade do MVP
 
-**Atualizado em:** 21 de agosto de 2026.
+**Produto:** Gerenciador de Áudio Visual.
+
+**Atualizado em:** 25 de agosto de 2026.
 
 Documento operacional para qualquer pessoa ou IA retomar o projeto sem depender do
 histórico de conversas. Regras de negócio e decisões arquiteturais continuam nos
@@ -31,7 +33,7 @@ retornar ao último commit.
 | 3 — análise e prévia | IMPLEMENTADO — AGUARDA VALIDAÇÃO | análise somente leitura, SHA-256, conflitos, prévia e 17 testes agente |
 | 4 — organização segura | IMPLEMENTADO — AGUARDA VALIDAÇÃO | movimentação, checkpoints, catálogo e abertura contextual implementados; falta ensaio funcional |
 | 5 — frontend web | EM IMPLEMENTAÇÃO | primeira fatia Docker com autenticação, contexto, catálogo, edição e tags |
-| 6 — Drive | PLANEJADO | não iniciado |
+| 6 — Drive | EM IMPLEMENTAÇÃO | OAuth real conectado; próximos passos são pastas, lotes e upload retomável |
 | 7 — tempo real | PLANEJADO | não iniciado |
 | 8 — fechamento | PLANEJADO | não iniciado |
 
@@ -105,11 +107,19 @@ retornar ao último commit.
 - frontend e proxy do backend responderam HTTP `200`;
 - paleta principal verde, branca e preta aplicada.
 
+### Google Drive — OAuth
+
+- backend e frontend implementados para conectar, consultar e desconectar uma conta por empresa;
+- estado OAuth de uso único e refresh token criptografado cobertos por 3 testes;
+- build TypeScript/Vite, `manage.py check` e consistência de migrations aprovados;
+- credenciais OAuth configuradas localmente e reconhecidas pelo Google;
+- autorização real concluída com uma conta de teste pelo frontend;
+- URI de retorno exigida: `http://127.0.0.1:8000/api/v1/drive/oauth/callback`.
+
 ## Validações ainda pendentes
 
 - executar o agente no Python 3.14 oficial;
-- subir Keycloak e testar login OIDC real no navegador;
-- criar conta e empresa de teste;
+- revalidar o login OIDC do agente após a troca de marca;
 - validar presença e comando `PING` ponta a ponta;
 - ensaiar seleção, cancelamento e recuperação pela interface visível;
 - validar a extração avançada da data original de câmera quando houver adaptador.
@@ -119,15 +129,22 @@ retornar ao último commit.
 
 ## Próxima implementação
 
-Preservar as pendências de validação e iniciar a fundação da Fase 6:
+Preservar as pendências de validação e continuar a Fase 6:
 
 1. revalidar pela interface a conclusão da criação e a conexão automática da máquina;
-2. implementar contratos de armazenamento e adaptador local simulado do Drive;
-3. modelar conta, lote, item, tentativa e checkpoint de upload;
+2. implementar a árvore idempotente de pastas do produto no Drive;
+3. implementar contratos de armazenamento e modelar conta histórica, pasta, lote,
+   item, tentativa e checkpoint;
 4. manter o binário fora do backend e preparar sessão retomável direta agente–Drive;
-5. implementar detecção automática de discos externos no agente;
-6. validar visualmente o fluxo completo no Windows/Python 3.14;
-7. recompilar o instalador somente após nova autorização e validação do código-fonte.
+5. preservar a conexão pronta e implementar criação e acompanhamento de lotes;
+6. adicionar progresso, pausa, retomada, cancelamento e erros funcionais no frontend;
+7. implementar detecção automática de discos externos no agente;
+8. validar visualmente o fluxo completo no Windows/Python 3.14;
+9. recompilar o instalador somente após nova autorização e validação do código-fonte.
+
+O frontend da Fase 6 é obrigatório para o aceite do MVP. Ele usará inicialmente
+polling das APIs centrais; WebSocket permanece na Fase 7. Refresh token, credenciais
+OAuth e URL retomável nunca serão entregues ao navegador.
 
 ## Critérios obrigatórios da Fase 4
 
@@ -148,4 +165,4 @@ Preservar as pendências de validação e iniciar a fundação da Fase 6:
 4. [Organização local](../02-regras-negocio/organizacao-local.md);
 5. [Filas, retomada e idempotência](../03-arquitetura/filas-retomada-idempotencia.md);
 6. código e testes existentes em `agent/`;
-7. continuar a Fase 5 a partir da primeira fatia executável.
+7. continuar a Fase 6 pela estrutura de pastas e persistência de lotes.

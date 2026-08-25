@@ -37,7 +37,7 @@ def test_window_starts_disconnected_and_discards_session_on_close(tmp_path) -> N
         session,
     )
 
-    assert window.windowTitle() == "LEGADO — Agente local"
+    assert window.windowTitle() == "Gerenciador de Áudio Visual — Agente local"
     window.close()
     application.processEvents()
 

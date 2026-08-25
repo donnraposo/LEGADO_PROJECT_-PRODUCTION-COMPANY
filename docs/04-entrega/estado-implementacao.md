@@ -1,13 +1,15 @@
 # Estado da implementação
 
+**Produto:** Gerenciador de Áudio Visual.
+
 > Execução vigente: [Roadmap do MVP funcional](roadmap-mvp.md) e [Checklist do MVP](checklist-mvp.md).
 > Retomada operacional: [Continuidade do MVP](continuidade-mvp.md).
 
 **Estado:** EM IMPLEMENTAÇÃO desde 1º de agosto de 2026.
 
-**Última consolidação:** 21 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
+**Última consolidação:** 25 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
 3 implementadas e aguardando validação funcional; Fase 4 tecnicamente concluída e
-aguardando ensaio funcional; primeira fatia executável da Fase 5 disponível no Docker.
+aguardando ensaio funcional; Fase 5 executável e fundação OAuth da Fase 6 implementada.
 
 Registro operacional do software implementado, das validações executadas, das limitações conhecidas e do ponto obrigatório de continuidade.
 
@@ -59,7 +61,8 @@ Registro operacional do software implementado, das validações executadas, das 
 - destino previsto em `Cliente/Projeto/Ano/Mês/Dia`, com segmentos seguros para Windows;
 - prévia selecionável persistida e recuperável após reinício;
 - cancelamento entre arquivos preserva a prévia parcial;
-- nenhuma operação de mover, renomear, sobrescrever ou excluir foi adicionada.
+- a análise permanece somente leitura; a movimentação foi isolada no fluxo de
+  organização segura, sempre após confirmação.
 
 ### Persistência e desenvolvimento
 
@@ -78,6 +81,25 @@ Registro operacional do software implementado, das validações executadas, das 
 - seleção de empresa e projeto e rota contextual do catálogo;
 - listagem, busca, resumo, edição de metadados e aplicação ou remoção de tags;
 - cliente HTTP com token e empresa somente em cabeçalhos;
+- painel Google Drive com conexão, estado e desconexão por empresa;
+- troca da conta restrita ao papel Proprietário e mensagens operacionais simples;
+
+### Google Drive — OAuth
+
+**Estado:** IMPLEMENTADO E VALIDADO COM CONTA GOOGLE REAL.
+
+- Authorization Code processado exclusivamente pelo backend;
+- escopo mínimo `drive.file`, além de `openid email` para identificar a conta;
+- estado aleatório com validade de dez minutos, hash persistido e consumo único;
+- refresh token e e-mail criptografados no PostgreSQL;
+- token, segredo do cliente e código de autorização não são enviados ao frontend;
+- conexão isolada por empresa e gerenciamento exclusivo do Proprietário;
+- desconexão remove imediatamente a credencial e os dados locais da conta;
+- callback retorna somente `connected` ou `error` ao frontend;
+- variáveis de ambiente e contrato OpenAPI adicionados sem segredos reais.
+- credenciais carregadas pelo ambiente sem exposição em logs ou respostas;
+- endpoint do Google reconheceu o cliente OAuth configurado;
+- autorização real concluída e conta Google conectada pelo frontend;
 - tipos principais gerados do contrato OpenAPI;
 - estados de carregamento, vazio, erro e layout responsivo para pessoa não técnica;
 - paleta visual principal verde, branca e preta;
@@ -293,21 +315,25 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
   validações atuais usam o runtime auxiliar Python 3.12;
 - extração avançada de data original de câmera ainda não possui adaptador por formato;
 - Fases 3 e 4 ainda requerem ensaio manual da interface com Python 3.14;
-- login e fluxo real do frontend ainda aguardam conta e dados de ensaio;
+- fluxo real do frontend e OAuth Google validados com conta de ensaio;
 - gestão web de clientes, projetos, acessos, máquinas, operações e auditoria permanece pendente;
-- WebSocket, uploads, Drive, aprovações e downloads permanecem pendentes.
+- criação idempotente de pastas, lotes, upload retomável, WebSocket, aprovações e
+  downloads permanecem pendentes;
 
 ## Próxima etapa obrigatória
 
-Revalidar o agente atual e iniciar a fundação da Fase 6:
+Revalidar o agente atual e continuar a Fase 6:
 
 1. revalidar a conclusão visual da criação e o registro automático da máquina;
-2. criar contratos de armazenamento e adaptador local simulado do Drive;
-3. modelar conta, lote, item, tentativa e checkpoint de upload;
+2. definir e implementar a árvore idempotente de pastas no Drive;
+3. criar contratos de armazenamento e modelar histórico de conta, pasta, lote,
+   item, tentativa e checkpoint;
 4. preservar upload direto agente–Drive sem transportar binário pelo backend;
-5. implementar detecção automática de discos externos no agente;
-6. executar o ensaio completo em Python 3.14 quando o runtime estiver disponível;
-7. recompilar o instalador somente após autorização explícita.
+5. preservar a conexão Google implementada e adicionar a operação dos lotes no frontend;
+6. exibir progresso, estados, pausa, retomada, cancelamento e erros acionáveis;
+7. implementar detecção automática de discos externos no agente;
+8. executar o ensaio completo em Python 3.14 quando o runtime estiver disponível;
+9. recompilar o instalador somente após autorização explícita.
 
 O detalhamento de retomada, limitações do ambiente e ordem de leitura está consolidado
 em [Continuidade do MVP](continuidade-mvp.md).
@@ -321,6 +347,9 @@ em [Continuidade do MVP](continuidade-mvp.md).
 - prévia completa pode ser reaberta antes da confirmação;
 - organização exige confirmação explícita e nunca sobrescreve um destino;
 - cada movimentação concluída possui checkpoint idempotente;
+- frontend recupera o estado do lote após recarregar a página;
+- comandos do frontend respeitam autorização e o próximo bloco seguro;
+- nenhum segredo OAuth ou URL retomável aparece no navegador ou nos logs;
 - Ruff e suítes afetadas permanecem aprovados.
 
 ## Protocolo de atualização

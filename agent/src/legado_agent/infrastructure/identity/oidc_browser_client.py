@@ -69,7 +69,10 @@ class OidcBrowserClient:
                 query = parse_qs(urlparse(self.path).query)
                 result["code"] = query.get("code", [""])[0]
                 result["state"] = query.get("state", [""])[0]
-                body = "Autenticação concluída. Você pode retornar ao LEGADO.".encode()
+                body = (
+                    "Autenticação concluída. Você pode retornar ao "
+                    "Gerenciador de Áudio Visual."
+                ).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))

@@ -1,5 +1,7 @@
 # Requisitos não funcionais
 
+**Produto:** Gerenciador de Áudio Visual.
+
 Requisitos transversais de segurança, confiabilidade, desempenho e operação.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.

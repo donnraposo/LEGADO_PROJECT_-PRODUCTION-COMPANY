@@ -1,5 +1,7 @@
 # Critérios de aceite
 
+**Produto:** Gerenciador de Áudio Visual.
+
 Condições gerais já aprovadas para considerar o produto funcional.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.
@@ -42,7 +44,8 @@ O projeto será considerado funcional quando, no mínimo:
 
 
 
-Critérios detalhados serão criados após a arquitetura técnica.
+Os critérios executáveis do MVP estão detalhados em [Roadmap do MVP](roadmap-mvp.md),
+[Checklist](checklist-mvp.md) e [Plano de testes](plano-testes.md).
 
 
 

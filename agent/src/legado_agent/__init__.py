@@ -1,1 +1,1 @@
-"""Agente local da plataforma LEGADO."""
+"""Agente local do Gerenciador de Áudio Visual."""

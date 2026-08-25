@@ -156,6 +156,10 @@ Tabelas conceituais:
 
 Identificadores de sessões retomáveis serão criptografados e não aparecerão em auditoria ou respostas comuns.
 
+Cada `upload_batch` deverá referenciar de forma imutável a `drive_account` escolhida
+na criação. Trocar a conta ativa da empresa não poderá alterar lotes anteriores nem
+permitir retomada em outra conta.
+
 
 
 #### Aprovações e downloads
@@ -190,6 +194,8 @@ Tabelas conceituais:
 
 - `drive_accounts`;
 
+- `drive_folders`;
+
 - `drive_change_cursors`;
 
 - `drive_objects`;
@@ -203,6 +209,10 @@ Tabelas conceituais:
 
 
 Refresh tokens e outros segredos serão criptografados antes da persistência. Chaves de criptografia ficarão fora do banco.
+
+Contas desconectadas deverão conservar identidade e referências históricas sem
+conservar credencial utilizável. A implementação atual possui apenas uma conta ativa
+por empresa e deverá evoluir antes da criação dos lotes.
 
 
 

@@ -1,6 +1,6 @@
-#define AppName "Agente Local LEGADO"
+#define AppName "Agente Local — Gerenciador de Áudio Visual"
 #define AppVersion "0.1.1"
-#define AppPublisher "LEGADO"
+#define AppPublisher "Gerenciador de Áudio Visual"
 #define AppExecutable "LegadoAgent.exe"
 
 [Setup]

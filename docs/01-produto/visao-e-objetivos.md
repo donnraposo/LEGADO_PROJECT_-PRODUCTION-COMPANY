@@ -1,5 +1,7 @@
 # Visão e objetivos
 
+**Produto:** Gerenciador de Áudio Visual.
+
 Finalidade, visão, princípios, escala e glossário do produto.
 
 > Origem: documento mestre v0.12. As numerações originais foram mantidas para rastreabilidade.
@@ -34,7 +36,7 @@ As antigas fases de visão, análise técnica, arquitetura, estrutura, modelo de
 
 ### Objetivo
 
-Construir uma plataforma para produtoras audiovisuais que:
+Construir o **Gerenciador de Áudio Visual**, uma plataforma para produtoras audiovisuais que:
 
 1. acesse HDs externos, pen drives e outros dispositivos físicos;
 2. organize arquivos por cliente, projeto e data de criação registrada pela câmera;

@@ -1,5 +1,7 @@
 # Ambiente Docker de desenvolvimento
 
+Ambiente do **Gerenciador de Áudio Visual**.
+
 Todos os componentes de servidor serão executados em containers. Não é necessário instalar Python, PostgreSQL, Redis, Keycloak ou n8n diretamente no Windows.
 
 ## Preparação

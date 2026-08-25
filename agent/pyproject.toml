@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "legado-agent"
 version = "0.1.1"
-description = "Agente local Windows da plataforma LEGADO"
+description = "Agente local Windows do Gerenciador de Áudio Visual"
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "PySide6==6.11.1",

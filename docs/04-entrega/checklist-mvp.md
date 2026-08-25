@@ -53,9 +53,10 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 ## Fase 5 — frontend
 
 - [x] React/TypeScript/Vite;
-- [ ] login e contexto empresarial;
+- [x] login e contexto empresarial;
 - [ ] clientes, projetos e acessos;
-- [ ] catálogo, tags, máquinas e operações;
+- [x] catálogo e tags;
+- [ ] máquinas e operações pelo frontend;
 - [ ] fila, progresso, erros e auditoria;
 - [ ] fluxo adequado a usuário não técnico.
 
@@ -63,12 +64,22 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 
 - [ ] contratos de armazenamento e adaptador local simulado;
 - [ ] modelos de conta, lote, item, tentativa e checkpoint;
-- [ ] OAuth `drive.file` e pasta isolada;
+- [x] OAuth `drive.file` validado com conta real de teste;
+- [ ] pasta raiz isolada e árvore idempotente;
+- [x] estado OAuth temporário, uso único e callback exclusivo do backend;
+- [x] refresh token criptografado e isolado por empresa;
 - [ ] sessão retomável e checkpoint;
 - [ ] upload direto agente–Drive;
 - [ ] pausa, retomada e cancelamento;
 - [ ] integridade e objeto do Drive confirmados;
-- [ ] catálogo sincronizado sem duplicação.
+- [ ] catálogo sincronizado sem duplicação;
+- [x] frontend inicia e acompanha a conexão sem receber credenciais persistentes;
+- [ ] frontend cria lote e acompanha progresso geral e por arquivo;
+- [ ] frontend oferece pausa, retomada e cancelamento;
+- [ ] recarregar a página recupera o estado central do lote;
+- [ ] erros de autenticação, internet, disco, cota e integridade são acionáveis;
+- [x] frontend nunca expõe refresh token ou URL retomável.
+- [x] ensaio OAuth real com credenciais e conta Google de teste.
 
 ## Fase 7 — tempo real e reconciliação
 
