@@ -12,8 +12,6 @@ def test_discovery_ignores_technical_and_duplicate_selections(tmp_path) -> None:
     recycle_bin.mkdir()
     (recycle_bin / "deleted.mov").write_bytes(b"ignored")
 
-    discovered = SafeFileDiscovery().discover(
-        [media, expected, recycle_bin / "deleted.mov"]
-    )
+    discovered = SafeFileDiscovery().discover([media, expected, recycle_bin / "deleted.mov"])
 
     assert discovered == [expected]

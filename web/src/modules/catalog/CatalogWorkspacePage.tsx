@@ -8,6 +8,7 @@ import type { MediaFile } from "../../shared/api/types";
 import { formatFileSize } from "../../shared/format/fileSize";
 import { MediaEditor } from "./MediaEditor";
 import { DriveConnectionPanel } from "../drive/DriveConnectionPanel";
+import { UploadBatchPanel } from "../uploads/UploadBatchPanel";
 
 export function CatalogWorkspacePage() {
   const { companyId: routeCompanyId, projectId: routeProjectId } = useParams();
@@ -167,7 +168,15 @@ export function CatalogWorkspacePage() {
         <DriveConnectionPanel
           api={api}
           companyId={companyId}
+          projectId={projectId}
           isOwner={currentCompany?.role === "OWNER"}
+        />
+
+        <UploadBatchPanel
+          api={api}
+          companyId={companyId}
+          projectId={projectId}
+          projects={projects.data?.items ?? []}
         />
 
         <section className="summary-grid" aria-label="Resumo do catálogo">

@@ -3,7 +3,12 @@
 **Produto:** Gerenciador de Áudio Visual.
 
 **Estado atual:** OAuth implementado e validado com conta Google real em 25 de
-agosto de 2026. Estrutura de pastas, lotes e upload retomável permanecem pendentes.
+agosto de 2026. Estrutura idempotente de pastas implementada e validada no Drive real
+em 26 de agosto de 2026. Histórico de contas, lotes, itens, tentativas e checkpoints
+foram implementados em 28 de agosto. A criação, consulta e renovação segura da sessão
+retomável e o envio direto em blocos pelo agente também estão implementados. O ensaio
+real e os controles operacionais permanecem pendentes. A confirmação central do objeto
+foi implementada e validada com gateway simulado.
 
 Propriedade, OAuth, upload retomável, custos e limites do ambiente de testes.
 
@@ -39,27 +44,28 @@ Google Workspace e Drive Compartilhado continuam como objetivo de produção.
 - desconectar elimina imediatamente a credencial local; revogação remota no Google
   permanece pendente no adaptador real.
 
-#### Estrutura proposta para a próxima implementação
+#### Estrutura oficial implementada
 
 ```text
 Gerenciador de Áudio Visual/
-└── Cliente/
+└── Empresa/
     └── Projeto/
-        └── Ano/
-            └── Mês/
-                └── Dia/
-                    └── arquivos
+        └── ANO.MÊS/
+            └── DIA/
+                ├── Originais/
+                ├── Previews/
+                └── Entregas/
 ```
 
-Esta árvore ainda depende de confirmação explícita antes da implementação. As pastas
-serão criadas sob demanda e reutilizadas pelo identificador do Drive. O
-PostgreSQL armazenará os IDs, a conta e o vínculo empresarial; nomes não serão usados
-isoladamente como identidade. A operação será idempotente e nunca substituirá
-silenciosamente um arquivo existente.
+Exemplo: `Gerenciador de Áudio Visual/Empresa/Projeto/2026.08/25/Originais`.
+Ano, mês e dia usam zeros à esquerda. As pastas são criadas sob demanda e reutilizadas
+pelo identificador do Drive. O PostgreSQL armazena os IDs, a conta, o projeto, a chave
+funcional e o pai; nomes não são usados isoladamente como identidade. A operação é
+serializada por conta e idempotente.
 
-O modelo atual mantém somente a conexão ativa da empresa e ainda não preserva o
-histórico necessário de contas anteriores. Esse histórico deverá ser modelado antes
-dos lotes para impedir retomada em conta diferente.
+O modelo preserva contas históricas e impõe no máximo uma conta ativa por empresa.
+Cada lote guarda imutavelmente a conta e as pastas escolhidas na criação. Desconectar
+a conta remove suas credenciais locais e impede novas sessões para lotes associados.
 
 #### Escopo funcional
 
@@ -79,17 +85,51 @@ dos lotes para impedir retomada em conta diferente.
 7. backend valida identificador, tamanho, checksum e metadados finais;
 8. somente após consistência completa o catálogo muda para `SINCRONIZADO`.
 
+#### Implementação atual do envio em blocos
+
+- o backend cria, consulta e renova a sessão retomável;
+- a referência da sessão é cifrada no PostgreSQL e descriptografada somente para a
+  resposta exclusiva do agente;
+- o agente localiza o arquivo pelo `media_file_id`; caminhos permanecem no SQLite;
+- o comando `UPLOAD_FILE` usa o item de upload como `resource_id`;
+- o agente valida tamanho e SHA-256 antes do primeiro bloco;
+- o bloco padrão possui 8 MiB e sempre é múltiplo de 256 KiB;
+- somente o último bloco pode ser menor;
+- `308 Resume Incomplete` avança pelo cabeçalho `Range` confirmado pelo Drive;
+- `200` ou `201` conclui o transporte e encaminha o item para verificação;
+- `404` ou `410` invalida a sessão, cria nova tentativa e reinicia pelo ponto que o
+  Drive confirmar para a nova sessão;
+- falha de rede grava `INTERRUPTED` no SQLite e mantém o comando retomável;
+- antes de cada bloco, o agente consulta o controle central do item;
+- `PAUSE_REQUESTED` e `CANCEL_REQUESTED` são aplicados entre blocos, preservando o
+  último byte confirmado; `PAUSED` permanece estável até retomada explícita;
+- a retomada devolve o item a `READY`, sem criar lote ou objeto duplicado;
+- a URL temporária existe apenas em memória e nunca entra no SQLite, no resultado do
+  comando, na auditoria ou no frontend.
+
+O SQLite v4 armazena `item_id`, `media_file_id`, caminho local, `attempt_id`, tamanho,
+SHA-256, bytes confirmados, estado e código resumido da falha. PostgreSQL permanece
+como fonte central do lote e Google Drive como fonte dos bytes efetivamente aceitos.
+
 Regras:
 
 - blocos respeitarão os múltiplos exigidos pela API do Drive;
 - ponto de retomada nunca será presumido;
 - sessão expirada será substituída com proteção contra duplicidade;
 - autorização temporária da sessão será tratada como segredo;
-- erros temporários usarão espera exponencial com variação aleatória;
+- espera exponencial com variação aleatória permanece pendente;
 - falta de espaço produzirá `AGUARDANDO_ESPACO_DRIVE`;
 - cota diária atingida produzirá `AGUARDANDO_COTA_DRIVE`;
 - arquivo acima de 5 TB não será enviado e receberá `NAO_SUPORTADO_PELO_DRIVE`;
 - arquivo não suportado pelo Drive permanecerá preservado, organizado e catalogado localmente.
+
+Após o último bloco, o agente entrega somente o ID do objeto. O backend consulta o
+Drive, valida lixeira, tamanho, pasta, nome e SHA-256 quando disponível, persiste o
+`drive_object` e somente então sincroniza o catálogo. A confirmação é idempotente.
+
+O ensaio real com arquivo descartável, interrupção e retomada foi aprovado em 29 de
+agosto de 2026. Pausa, retomada, cancelamento e mensagens operacionais específicas
+estão implementados. Permanecem pendentes os ensaios reais dos limites de cota e espaço.
 
 #### Conciliação
 

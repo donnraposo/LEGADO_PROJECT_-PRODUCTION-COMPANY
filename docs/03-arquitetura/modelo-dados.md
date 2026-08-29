@@ -38,7 +38,7 @@ Modelo conceitual aprovado para PostgreSQL e limites de persistência.
 
 
 
-Tabelas conceituais:
+Tabelas implementadas neste incremento:
 
 
 
@@ -146,7 +146,13 @@ Tabelas conceituais:
 
 - `upload_attempts`;
 
-- `upload_checkpoints`;
+- `upload_checkpoints`.
+
+As tabelas preservam conta e pasta de destino, versão física, ordem, tamanho, checksum,
+tentativas numeradas e checkpoints monotônicos. Há no máximo uma conta ativa por empresa,
+uma participação ativa por versão física e uma tentativa ativa por item.
+
+Tabelas ainda conceituais:
 
 - `task_leases`;
 
@@ -154,11 +160,23 @@ Tabelas conceituais:
 
 
 
-Identificadores de sessões retomáveis serão criptografados e não aparecerão em auditoria ou respostas comuns.
+Identificadores de sessões retomáveis são criptografados em
+`upload_attempts.session_reference_ciphertext` e não aparecem em auditoria ou respostas
+comuns. A exceção controlada é o endpoint exclusivo do agente, que entrega a URL
+temporária após validar empresa, usuário, projeto e máquina.
 
 Cada `upload_batch` deverá referenciar de forma imutável a `drive_account` escolhida
 na criação. Trocar a conta ativa da empresa não poderá alterar lotes anteriores nem
 permitir retomada em outra conta.
+
+No agente, a migration SQLite v4 adiciona `upload_jobs`, identificada por `item_id`,
+com `media_file_id`, caminho local, tentativa, tamanho, SHA-256, bytes confirmados,
+estado e erro resumido. A tabela deliberadamente não possui coluna para URL de sessão,
+token ou credencial.
+
+O `drive_objects` existente foi ampliado pela migration `catalog.0006`: item de upload,
+conta, pasta, nome, tamanho, SHA-256 e tipo MIME. A combinação conta/ID externo e o
+vínculo único com o item impedem confirmação duplicada ou substituição silenciosa.
 
 
 
@@ -195,6 +213,11 @@ Tabelas conceituais:
 - `drive_accounts`;
 
 - `drive_folders`;
+
+  Implementada com vínculo à conta e, quando aplicável, ao projeto; chave funcional
+  idempotente por conta, ID da pasta no provedor, ID do pai, nome e timestamps. A
+  restrição única `(account, folder_key)` impede duplicação lógica da árvore
+  `Empresa/Projeto/AAAA.MM/DD/{Originais,Previews,Entregas}`;
 
 - `drive_change_cursors`;
 

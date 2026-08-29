@@ -9,6 +9,7 @@ from legado_agent.application.ports.backend_gateway import (
     CatalogSyncError,
 )
 from legado_agent.domain.agent_command import AgentCommand
+from legado_agent.domain.upload_job import UploadSession
 
 
 class HttpBackendGateway(BackendGateway):
@@ -28,6 +29,78 @@ class HttpBackendGateway(BackendGateway):
 
     def close(self) -> None:
         self._client.close()
+
+    def ensure_upload_session(
+        self, company_id: UUID, machine_id: UUID, item_id: UUID
+    ) -> UploadSession:
+        response = self._client.post(
+            f"/api/v1/agent/upload-items/{item_id}/session",
+            headers=self._company_headers(company_id),
+            json={"machine_id": str(machine_id)},
+        )
+        self._raise_operation_error(response, "Não foi possível preparar o upload.")
+        data = response.json()
+        if str(data["checksum_algorithm"]).replace("-", "").upper() != "SHA256":
+            raise BackendOperationError("O algoritmo de integridade não é compatível.")
+        return UploadSession(
+            attempt_id=UUID(data["attempt_id"]),
+            item_id=UUID(data["item_id"]),
+            media_file_id=UUID(data["media_file_id"]),
+            session_url=str(data["session_url"]),
+            size_bytes=int(data["size_bytes"]),
+            checksum_sha256=str(data["checksum_digest"]).casefold(),
+            confirmed_bytes=int(data["confirmed_bytes"]),
+        )
+
+    def upload_control(self, company_id: UUID, machine_id: UUID, item_id: UUID) -> str:
+        response = self._client.get(
+            f"/api/v1/agent/upload-items/{item_id}/control",
+            headers=self._company_headers(company_id),
+            params={"machine_id": str(machine_id)},
+        )
+        self._raise_operation_error(response, "Não foi possível consultar o controle do upload.")
+        return str(response.json()["status"])
+
+    def report_upload_state(
+        self,
+        company_id: UUID,
+        machine_id: UUID,
+        item_id: UUID,
+        status: str,
+        confirmed_bytes: int,
+        failure_code: str = "",
+    ) -> None:
+        response = self._client.post(
+            f"/api/v1/agent/upload-items/{item_id}/control",
+            headers=self._company_headers(company_id),
+            json={
+                "machine_id": str(machine_id),
+                "status": status,
+                "confirmed_bytes": confirmed_bytes,
+                "failure_code": failure_code,
+            },
+        )
+        self._raise_operation_error(response, "Não foi possível confirmar o estado do upload.")
+
+    def record_upload_checkpoint(
+        self, company_id: UUID, attempt_id: UUID, confirmed_bytes: int
+    ) -> None:
+        response = self._client.put(
+            f"/api/v1/upload-attempts/{attempt_id}/checkpoint",
+            headers=self._company_headers(company_id),
+            json={"confirmed_bytes": confirmed_bytes},
+        )
+        self._raise_operation_error(response, "Não foi possível confirmar o progresso.")
+
+    def confirm_upload_object(
+        self, company_id: UUID, machine_id: UUID, attempt_id: UUID, provider_object_id: str
+    ) -> None:
+        response = self._client.post(
+            f"/api/v1/agent/upload-attempts/{attempt_id}/complete",
+            headers=self._company_headers(company_id),
+            json={"machine_id": str(machine_id), "provider_object_id": provider_object_id},
+        )
+        self._raise_operation_error(response, "Não foi possível confirmar o objeto do Drive.")
 
     def ingest_media_file(
         self,
@@ -73,9 +146,7 @@ class HttpBackendGateway(BackendGateway):
         return response.json()
 
     def list_clients(self, company_id: UUID) -> list[dict[str, object]]:
-        response = self._client.get(
-            "/api/v1/clients", headers=self._company_headers(company_id)
-        )
+        response = self._client.get("/api/v1/clients", headers=self._company_headers(company_id))
         response.raise_for_status()
         return response.json()["items"]
 
@@ -89,15 +160,11 @@ class HttpBackendGateway(BackendGateway):
         return response.json()
 
     def list_projects(self, company_id: UUID) -> list[dict[str, object]]:
-        response = self._client.get(
-            "/api/v1/projects", headers=self._company_headers(company_id)
-        )
+        response = self._client.get("/api/v1/projects", headers=self._company_headers(company_id))
         response.raise_for_status()
         return response.json()["items"]
 
-    def create_project(
-        self, company_id: UUID, client_id: UUID, name: str
-    ) -> dict[str, object]:
+    def create_project(self, company_id: UUID, client_id: UUID, name: str) -> dict[str, object]:
         response = self._client.post(
             "/api/v1/projects",
             headers=self._company_headers(company_id),

@@ -78,6 +78,27 @@ class GoogleOAuthGateway:
             granted_scopes=token_payload.get("scope", self.SCOPES),
         )
 
+    def refresh_access_token(self, refresh_token: str) -> str:
+        payload = self._request_json(
+            Request(
+                self.TOKEN_ENDPOINT,
+                data=urlencode(
+                    {
+                        "client_id": self._client_id,
+                        "client_secret": self._client_secret,
+                        "refresh_token": refresh_token,
+                        "grant_type": "refresh_token",
+                    }
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                method="POST",
+            )
+        )
+        access_token = payload.get("access_token")
+        if not access_token:
+            raise GoogleOAuthExchangeError("O Google não devolveu um token de acesso.")
+        return access_token
+
     @staticmethod
     def _request_json(request: Request) -> dict:
         try:

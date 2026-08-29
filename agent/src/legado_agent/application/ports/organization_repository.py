@@ -17,9 +17,7 @@ class OrganizationRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def update_item(
-        self, item_id: UUID, status: str, error_message: str = ""
-    ) -> None:
+    def update_item(self, item_id: UUID, status: str, error_message: str = "") -> None:
         raise NotImplementedError
 
     @abstractmethod

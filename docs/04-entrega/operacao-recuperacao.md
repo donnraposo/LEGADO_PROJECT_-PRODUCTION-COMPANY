@@ -60,6 +60,12 @@ Na produção comercial, backup físico e WAL permitirão recuperar o cluster at
 - após recuperação do banco, será executada conciliação não destrutiva;
 - política organizacional de retenção e backup do Drive será definida antes da operação comercial;
 - nenhuma recuperação poderá excluir ou substituir automaticamente arquivos do Drive.
+- trabalhos interrompidos permanecem no SQLite do agente sem armazenar a URL da sessão;
+- após nova autenticação, o agente solicita sessão ao backend e consulta o progresso do Drive;
+- se a sessão estiver expirada, o backend registra a tentativa anterior e cria outra;
+- o checkpoint SQLite auxilia a recuperação, mas nunca prevalece sobre os bytes
+  confirmados pelo Drive;
+- arquivos locais não serão apagados após falha, expiração ou recuperação.
 
 ## Metas iniciais
 

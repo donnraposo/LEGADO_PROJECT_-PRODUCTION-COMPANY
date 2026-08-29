@@ -22,8 +22,7 @@ def test_analysis_is_read_only_detects_issues_and_survives_restart(tmp_path) -> 
     duplicate.write_bytes(b"first-content")
     conflict.write_bytes(b"different-content")
     snapshots = {
-        path: (path.read_bytes(), path.stat().st_mtime_ns)
-        for path in (first, duplicate, conflict)
+        path: (path.read_bytes(), path.stat().st_mtime_ns) for path in (first, duplicate, conflict)
     }
     database = SQLiteDatabase(tmp_path / "agent.sqlite3")
     database.migrate()

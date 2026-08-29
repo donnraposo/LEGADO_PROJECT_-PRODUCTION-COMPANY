@@ -47,7 +47,8 @@ Este documento foi criado por autorização expressa do usuário para permitir a
 | Agente envia binário diretamente ao Drive | APROVADO |
 | n8n orquestra sem transportar arquivos grandes | APROVADO |
 | PostgreSQL armazena metadados, estados e auditoria | APROVADO |
-| Organização por Cliente/Projeto/Ano/Mês/Dia | APROVADO |
+| Organização local por Cliente/Projeto/Ano/Mês/Dia | APROVADO |
+| Árvore do Drive por Empresa/Projeto/AAAA.MM/DD/categoria | APROVADO E VALIDADO |
 | Data da câmera, com fallback do sistema de arquivos | APROVADO |
 | Prévia obrigatória | APROVADO |
 | Nunca apagar arquivos físicos | APROVADO |
@@ -149,6 +150,67 @@ Ao retomar este projeto:
 
 As entradas abaixo registram o estado existente na data de cada decisão. Para o
 estado atual, prevalecem a entrada mais recente e os documentos de entrega.
+
+### 29 de agosto de 2026 — versão 0.39
+
+- concluídos controles operacionais de pausa, retomada e cancelamento no próximo bloco seguro;
+- estado `PAUSED` permanece estável até retomada explícita;
+- controles usam versão esperada e chave idempotente, sem excluir histórico;
+- progresso central permanece monotônico e baseado nos bytes confirmados pelo Drive;
+- falhas de internet, autenticação, cota, disco e integridade receberam códigos estáveis
+  e mensagens simples no painel;
+- 64 testes backend, 36 testes do agente, 5 testes frontend, TypeScript e build aprovados;
+- backend e frontend reconstruídos, migrados e confirmados saudáveis.
+
+### 29 de agosto de 2026 — versão 0.38
+
+- implementado painel de lotes por projeto, data, categoria e arquivos catalogados;
+- máquina derivada da versão física e lotes com múltiplas máquinas bloqueados;
+- progresso geral e individual exposto por bytes confirmados e percentual;
+- polling de dois segundos restrito a lotes ativos, com restauração após recarga;
+- chave idempotente reutilizada durante repetição da mesma tentativa de criação;
+- erros técnicos convertidos em mensagens simples no frontend;
+- estilos consolidados em variáveis CSS para paleta, estados, superfícies, sombras,
+  raios e dimensões estruturais;
+- 63 testes backend, Ruff, 5 testes frontend, TypeScript e build aprovados.
+- controles de lote usam `expected_version` e chave idempotente, sem exclusão do histórico;
+- pausa e cancelamento são aplicados somente entre blocos, preservando o bloco em trânsito;
+- Drive continua sendo a fonte dos bytes confirmados e checkpoints centrais não regridem;
+- falhas operacionais normalizadas para internet, autenticação, cota, disco e integridade.
+
+### 28 de agosto de 2026 — versão 0.37
+
+- consolidada a conclusão do OAuth e da árvore idempotente do Google Drive;
+- registrada a estrutura oficial
+  `Gerenciador de Áudio Visual/Empresa/Projeto/AAAA.MM/DD/{Originais,Previews,Entregas}`;
+- registrado o ensaio real de 26 de agosto: oito pastas ativas, com um pai cada, e
+  segunda execução sem duplicação;
+- diferenciada a organização local por cliente da estrutura remota por empresa;
+- atualizados contrato, modelo de dados, plano de testes, continuidade e roadmap;
+- definida como próxima fatia a persistência de contas históricas, lotes, itens,
+  tentativas e checkpoints, seguida pelo upload retomável direto agente–Drive.
+- implementada em 28 de agosto de 2026 a persistência histórica de contas, lotes
+  vinculados à conta e às pastas, itens, tentativas e checkpoints monotônicos;
+- criação de lote protegida por chave de idempotência e conflito de conteúdo;
+- sessão retomável e transporte direto agente–Drive foram definidos como o incremento seguinte;
+- implementada a sessão retomável exclusiva do agente, com URL cifrada, reutilização,
+  expiração auditável e renovação em nova tentativa;
+- envio dos blocos e ensaio da sessão no Drive real permanecem pendentes.
+- implementado o envio direto em blocos pelo comando `UPLOAD_FILE`, com blocos de
+  8 MiB, checkpoint SQLite v4 e URL retomável somente em memória;
+- naquele ponto, ensaio real e confirmação do objeto ainda permaneciam pendentes.
+- caminhos locais são resolvidos no agente pelo `media_file_id` e não integram o
+  comando `UPLOAD_FILE` nem o contrato da sessão;
+- Google Drive prevalece sobre SQLite e PostgreSQL quanto aos bytes confirmados;
+- resposta `308` cria checkpoint, `404/410` renova sessão e `200/201` conclui transporte.
+- confirmação final consulta o Drive pelo backend e valida pasta, nome, tamanho,
+  lixeira e SHA-256 antes de persistir o objeto e sincronizar o catálogo;
+- migration `catalog.0006` amplia `drive_objects` sem criar representação concorrente;
+- ensaio real tentado em 28 de agosto não criou objeto devido a falha de DNS do Docker.
+- ensaio real aprovado em 29 de agosto: DNS externo operacional no backend Docker,
+  arquivo de 17 MiB retomado após 8 MiB e objeto confirmado por ID, tamanho e SHA-256;
+- mantida a resolução DNS padrão do Docker, pois a reativação dos containers eliminou
+  a indisponibilidade e os endpoints Google resolveram sem configuração fixa.
 
 ### 25 de agosto de 2026 — versão 0.36
 

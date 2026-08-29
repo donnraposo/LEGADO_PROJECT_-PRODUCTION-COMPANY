@@ -42,8 +42,7 @@ class ConfirmOrganizationUseCase:
             created_at=datetime.now(UTC),
         )
         organization_items = [
-            self._prepare_item(operation, item, decisions_by_item.get(item.id))
-            for item in selected
+            self._prepare_item(operation, item, decisions_by_item.get(item.id)) for item in selected
         ]
         self._repository.create_operation(operation, organization_items)
         return operation
@@ -65,9 +64,7 @@ class ConfirmOrganizationUseCase:
         if action not in {"KEEP", "AUTO_RENAME", "RENAME"}:
             raise ValueError(f"Decisão inválida para {item.name}.")
         source = Path(item.source_path)
-        self._file_mover.validate_source(
-            source, item.size_bytes, item.source_modified_ns
-        )
+        self._file_mover.validate_source(source, item.size_bytes, item.source_modified_ns)
         destination = self._file_mover.choose_destination(
             Path(operation.destination_root),
             item.destination_path,
@@ -76,9 +73,7 @@ class ConfirmOrganizationUseCase:
         )
         if source.absolute() == destination.absolute():
             raise ValueError(f"Origem e destino são iguais para {item.name}.")
-        return self._organization_item(
-            operation, item, str(destination), action, "PENDING"
-        )
+        return self._organization_item(operation, item, str(destination), action, "PENDING")
 
     @staticmethod
     def _organization_item(

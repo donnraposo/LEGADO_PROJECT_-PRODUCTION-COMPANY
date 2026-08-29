@@ -19,9 +19,7 @@ class AgentConfig:
         default_data = Path(os.environ.get("LOCALAPPDATA", Path.cwd())) / "LEGADO"
         return cls(
             backend_url=os.environ.get("LEGADO_BACKEND_URL", "http://127.0.0.1:8000"),
-            oidc_issuer=os.environ.get(
-                "LEGADO_OIDC_ISSUER", "http://127.0.0.1:8080/realms/legado"
-            ),
+            oidc_issuer=os.environ.get("LEGADO_OIDC_ISSUER", "http://127.0.0.1:8080/realms/legado"),
             oidc_client_id=os.environ.get("LEGADO_OIDC_CLIENT_ID", "legado-agent"),
             data_dir=Path(os.environ.get("LEGADO_DATA_DIR", default_data)),
             poll_interval_seconds=int(os.environ.get("LEGADO_POLL_INTERVAL", "5")),

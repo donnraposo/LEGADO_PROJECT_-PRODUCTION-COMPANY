@@ -5,9 +5,9 @@ Plataforma para organização local, catalogação, upload retomável e gestão 
 ## Estado
 
 O MVP está em implementação. A base de identidade, empresas, projetos, catálogo,
-operações, agente local, frontend e OAuth do Google Drive já foi construída. A
-próxima entrega é a estrutura idempotente de pastas, seguida de lotes e upload
-retomável direto do agente para o Drive.
+operações, agente local, frontend, OAuth, árvore de pastas do Google Drive e persistência
+idempotente de lotes, sessões retomáveis e envio direto em blocos já foi construída.
+A próxima entrega é repetir o ensaio real e implementar a interface de lotes.
 
 Para retomar o desenvolvimento, comece por [Continuidade do MVP](docs/04-entrega/continuidade-mvp.md)
 e depois consulte o [índice arquitetural](PROJETO_AUDIOVISUAL.md).

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 
 from legado_agent.domain.agent_command import AgentCommand
+from legado_agent.domain.upload_job import UploadSession
 
 
 class CatalogSyncError(Exception):
@@ -17,6 +18,40 @@ class BackendOperationError(Exception):
 
 
 class BackendGateway(ABC):
+    @abstractmethod
+    def upload_control(self, company_id: UUID, machine_id: UUID, item_id: UUID) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def report_upload_state(
+        self,
+        company_id: UUID,
+        machine_id: UUID,
+        item_id: UUID,
+        status: str,
+        confirmed_bytes: int,
+        failure_code: str = "",
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def ensure_upload_session(
+        self, company_id: UUID, machine_id: UUID, item_id: UUID
+    ) -> UploadSession:
+        raise NotImplementedError
+
+    @abstractmethod
+    def record_upload_checkpoint(
+        self, company_id: UUID, attempt_id: UUID, confirmed_bytes: int
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def confirm_upload_object(
+        self, company_id: UUID, machine_id: UUID, attempt_id: UUID, provider_object_id: str
+    ) -> None:
+        raise NotImplementedError
+
     @abstractmethod
     def ingest_media_file(
         self,
@@ -52,9 +87,7 @@ class BackendGateway(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create_project(
-        self, company_id: UUID, client_id: UUID, name: str
-    ) -> dict[str, object]:
+    def create_project(self, company_id: UUID, client_id: UUID, name: str) -> dict[str, object]:
         raise NotImplementedError
 
     @abstractmethod

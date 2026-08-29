@@ -29,15 +29,19 @@ class OidcBrowserClient:
         server = HTTPServer(("127.0.0.1", 0), handler)
         server.timeout = self._timeout_seconds
         redirect_uri = f"http://127.0.0.1:{server.server_port}/callback"
-        authorization_url = f"{self._issuer}/protocol/openid-connect/auth?{urlencode({
-            'client_id': self._client_id,
-            'response_type': 'code',
-            'scope': 'openid profile email',
-            'redirect_uri': redirect_uri,
-            'state': state,
-            'code_challenge': create_code_challenge(verifier),
-            'code_challenge_method': 'S256',
-        })}"
+        authorization_url = f"{self._issuer}/protocol/openid-connect/auth?{
+            urlencode(
+                {
+                    'client_id': self._client_id,
+                    'response_type': 'code',
+                    'scope': 'openid profile email',
+                    'redirect_uri': redirect_uri,
+                    'state': state,
+                    'code_challenge': create_code_challenge(verifier),
+                    'code_challenge_method': 'S256',
+                }
+            )
+        }"
         try:
             webbrowser.open(authorization_url)
             server.handle_request()
@@ -70,8 +74,7 @@ class OidcBrowserClient:
                 result["code"] = query.get("code", [""])[0]
                 result["state"] = query.get("state", [""])[0]
                 body = (
-                    "Autenticação concluída. Você pode retornar ao "
-                    "Gerenciador de Áudio Visual."
+                    "Autenticação concluída. Você pode retornar ao Gerenciador de Áudio Visual."
                 ).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/plain; charset=utf-8")

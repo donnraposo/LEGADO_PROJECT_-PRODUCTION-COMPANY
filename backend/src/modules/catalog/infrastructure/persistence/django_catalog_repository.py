@@ -382,6 +382,8 @@ class DjangoCatalogRepository(CatalogRepository):
             description=media.description,
             observations=media.observations,
             size_bytes=physical.size_bytes,
+            file_version_id=physical.id,
+            source_machine_id=physical.source_machine_id,
             checksum_algorithm=physical.checksum_algorithm,
             checksum_digest=physical.checksum_digest,
             recorded_at=media.recorded_at,

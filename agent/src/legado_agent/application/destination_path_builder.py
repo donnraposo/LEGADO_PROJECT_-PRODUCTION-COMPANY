@@ -20,9 +20,7 @@ def build_destination_path(
     if file_date is None:
         segments.append("DATA_NAO_IDENTIFICADA")
     else:
-        segments.extend(
-            [str(file_date.year), f"{file_date.month:02d}", f"{file_date.day:02d}"]
-        )
+        segments.extend([str(file_date.year), f"{file_date.month:02d}", f"{file_date.day:02d}"])
     segments.append(file_name)
     return str(PureWindowsPath(*segments))
 

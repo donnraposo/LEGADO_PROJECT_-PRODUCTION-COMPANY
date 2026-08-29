@@ -79,14 +79,13 @@ Cada módulo será uma unidade funcional independente. A divisão não represent
 ### Estado físico atual
 
 Já existem módulos funcionais para identidade, empresas, projetos, auditoria,
-notificações, catálogo, operações e Drive. Os módulos de upload, aprovações e
-downloads permanecem previstos e serão criados somente quando suas respectivas
-fatias forem implementadas.
+notificações, catálogo, operações, Drive e uploads. Aprovações e downloads
+permanecem previstos para suas respectivas fases.
 
-No Drive já estão implementados o estado OAuth, a conta ativa da empresa, a API
-de autorização, callback, consulta e desconexão e o gateway Google. A próxima
-evolução deverá acrescentar histórico de contas, pastas idempotentes, lotes,
-itens, tentativas e checkpoints sem quebrar esses contratos.
+No Drive estão implementados OAuth, histórico de contas, pastas idempotentes, lotes,
+itens, tentativas, checkpoints e sessão retomável cifrada. O agente já possui domínio,
+caso de uso, transporte HTTP e repositório SQLite para enviar blocos diretamente ao
+Drive. A próxima evolução confirma o objeto final e expõe os lotes no frontend.
 
 ### Estrutura interna de um módulo
 
@@ -135,15 +134,9 @@ config ─────────► todas, somente para composição
 
 ## Agente local
 
-```text
-agent/src/modules/
-├── authentication/
-├── filesystem/
-├── organization/
-├── uploads/
-├── synchronization/
-└── desktop_ui/
-```
+O agente físico usa `legado_agent/{domain,application,adapters,infrastructure}`. O
+upload acrescenta `upload_job`, portas de repositório/transporte, caso de uso
+`execute_upload_use_case`, transporte HTTP retomável e persistência `upload_jobs`.
 
 Os módulos do agente usarão as mesmas camadas de domínio, aplicação, adaptadores e infraestrutura. `desktop_ui` será um adaptador PySide6 e não conterá regras de negócio. Sistema de arquivos, SQLite, HTTP e WebSocket serão implementações de portas internas.
 

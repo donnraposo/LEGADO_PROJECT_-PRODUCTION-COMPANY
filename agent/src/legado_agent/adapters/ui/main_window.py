@@ -29,6 +29,7 @@ from legado_agent.application.confirm_organization_use_case import (
 from legado_agent.application.execute_organization_use_case import (
     ExecuteOrganizationUseCase,
 )
+from legado_agent.application.execute_upload_use_case import ExecuteUploadUseCase
 from legado_agent.application.reconcile_organization_use_case import (
     ReconcileOrganizationUseCase,
 )
@@ -45,6 +46,9 @@ from legado_agent.infrastructure.filesystem.windows_safe_file_mover import (
     WindowsSafeFileMover,
 )
 from legado_agent.infrastructure.http.http_backend_gateway import HttpBackendGateway
+from legado_agent.infrastructure.http.http_resumable_upload_transport import (
+    HttpResumableUploadTransport,
+)
 from legado_agent.infrastructure.identity.oidc_browser_client import OidcBrowserClient
 from legado_agent.infrastructure.persistence.sqlite_analysis_repository import (
     SQLiteAnalysisRepository,
@@ -52,6 +56,9 @@ from legado_agent.infrastructure.persistence.sqlite_analysis_repository import (
 from legado_agent.infrastructure.persistence.sqlite_local_repository import SQLiteLocalRepository
 from legado_agent.infrastructure.persistence.sqlite_organization_repository import (
     SQLiteOrganizationRepository,
+)
+from legado_agent.infrastructure.persistence.sqlite_upload_repository import (
+    SQLiteUploadRepository,
 )
 
 
@@ -63,6 +70,7 @@ class MainWindow(QMainWindow):
         analysis_repository: SQLiteAnalysisRepository,
         organization_repository: SQLiteOrganizationRepository,
         session: AgentSession,
+        upload_repository: SQLiteUploadRepository | None = None,
     ) -> None:
         super().__init__()
         self._config = config
@@ -70,6 +78,8 @@ class MainWindow(QMainWindow):
         self._analysis_repository = analysis_repository
         self._organization_repository = organization_repository
         self._session = session
+        self._upload_repository = upload_repository
+        self._upload_transport: HttpResumableUploadTransport | None = None
         self._backend: HttpBackendGateway | None = None
         self._coordinator: AgentCoordinator | None = None
         self._analysis_task: AnalysisTask | None = None
@@ -200,9 +210,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._selection_label)
         layout.addWidget(self._destination_label)
         layout.addWidget(self._analysis_progress)
-        layout.addWidget(
-            QLabel("Prévia local — movimentação somente após confirmação explícita")
-        )
+        layout.addWidget(QLabel("Prévia local — movimentação somente após confirmação explícita"))
         layout.addWidget(self._analysis_table, 3)
         layout.addWidget(QLabel("Fila de comandos"))
         layout.addWidget(self._command_table, 1)
@@ -215,9 +223,7 @@ class MainWindow(QMainWindow):
         self._status.setText("Aguardando autenticação no navegador...")
 
         def login():
-            token = OidcBrowserClient(
-                self._config.oidc_issuer, self._config.oidc_client_id
-            ).login()
+            token = OidcBrowserClient(self._config.oidc_issuer, self._config.oidc_client_id).login()
             backend = HttpBackendGateway(self._config.backend_url, token)
             try:
                 companies = backend.list_companies()
@@ -269,9 +275,7 @@ class MainWindow(QMainWindow):
                 [
                     (
                         UUID(str(project["client_id"])),
-                        client_names.get(
-                            str(project["client_id"]), "Cliente desconhecido"
-                        ),
+                        client_names.get(str(project["client_id"]), "Cliente desconhecido"),
                         UUID(str(project["id"])),
                         str(project["name"]),
                     )
@@ -429,7 +433,16 @@ class MainWindow(QMainWindow):
         company_id = self._company_id()
         if self._backend is None or company_id is None:
             return
-        self._coordinator = AgentCoordinator(self._repository, self._backend)
+        upload_use_case = None
+        if self._upload_repository is not None:
+            self._upload_transport = HttpResumableUploadTransport()
+            upload_use_case = ExecuteUploadUseCase(
+                self._upload_repository,
+                self._backend,
+                self._upload_transport,
+                StreamingSha256(),
+            )
+        self._coordinator = AgentCoordinator(self._repository, self._backend, upload_use_case)
         self._connect.setEnabled(False)
         self._connect.hide()
         self._status.setText("Registrando presença da máquina...")
@@ -490,15 +503,11 @@ class MainWindow(QMainWindow):
             self._add_selected_paths([Path(selected)])
 
     def _select_files(self) -> None:
-        selected, _filter = QFileDialog.getOpenFileNames(
-            self, "Selecionar arquivos para análise"
-        )
+        selected, _filter = QFileDialog.getOpenFileNames(self, "Selecionar arquivos para análise")
         self._add_selected_paths([Path(path) for path in selected])
 
     def _select_destination(self) -> None:
-        selected = QFileDialog.getExistingDirectory(
-            self, "Selecionar pasta-base da organização"
-        )
+        selected = QFileDialog.getExistingDirectory(self, "Selecionar pasta-base da organização")
         if selected:
             self._destination_root = Path(selected)
             self._destination_label.setText(f"Destino-base: {selected}")
@@ -639,9 +648,7 @@ class MainWindow(QMainWindow):
                 item_id, item.checkState() == Qt.CheckState.Checked
             )
             if self._current_batch:
-                self._current_items = self._analysis_repository.list_items(
-                    self._current_batch.id
-                )
+                self._current_items = self._analysis_repository.list_items(self._current_batch.id)
             self._update_analysis_controls()
 
     def _confirm_organization(self) -> None:
@@ -658,9 +665,7 @@ class MainWindow(QMainWindow):
             return
         if self._current_batch is None:
             return
-        self._current_items = self._analysis_repository.list_items(
-            self._current_batch.id
-        )
+        self._current_items = self._analysis_repository.list_items(self._current_batch.id)
         decisions = self._collect_organization_decisions()
         if decisions is None:
             return
@@ -745,9 +750,7 @@ class MainWindow(QMainWindow):
         )
         if not accepted or choice == options[2]:
             return None
-        return OrganizationDecision(
-            item.id, "KEEP" if choice == options[0] else "SKIP"
-        )
+        return OrganizationDecision(item.id, "KEEP" if choice == options[0] else "SKIP")
 
     def _planned_destination(self, relative_path: str) -> Path:
         if self._destination_root is None:
@@ -831,9 +834,7 @@ class MainWindow(QMainWindow):
 
     def _organization_recovered(self, operation: object) -> None:
         if operation is not None:
-            self._status.setText(
-                "Organização interrompida recuperada; autentique-se para retomar."
-            )
+            self._status.setText("Organização interrompida recuperada; autentique-se para retomar.")
             self._render_organization_status(operation.id)
         self._update_analysis_controls()
 
@@ -848,9 +849,7 @@ class MainWindow(QMainWindow):
         self._choose_files.setEnabled(available)
         self._choose_destination.setEnabled(available)
         self._analyze.setEnabled(
-            available
-            and bool(self._selected_paths)
-            and self._destination_root is not None
+            available and bool(self._selected_paths) and self._destination_root is not None
         )
         active = self._organization_repository.active_operation()
         resumable = active is not None and active.company_id == self._company_id()
@@ -859,9 +858,7 @@ class MainWindow(QMainWindow):
             and self._current_batch.status == "READY"
             and any(item.selected for item in self._current_items)
         )
-        self._organize.setText(
-            "Retomar organização" if resumable else "Confirmar e organizar"
-        )
+        self._organize.setText("Retomar organização" if resumable else "Confirmar e organizar")
         self._organize.setEnabled(available and (resumable or ready))
 
     def _update_creation_controls(self) -> None:
@@ -911,4 +908,6 @@ class MainWindow(QMainWindow):
         self._session.clear()
         if self._backend:
             self._backend.close()
+        if self._upload_transport:
+            self._upload_transport.close()
         super().closeEvent(event)

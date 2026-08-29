@@ -58,6 +58,70 @@ APIs internas terão audiência e credenciais próprias e não aceitarão tokens
 
 
 
+#### Google Drive implementado
+
+
+
+- consulta da conexão: `GET /api/v1/drive/account`;
+
+- desconexão pelo Proprietário: `DELETE /api/v1/drive/account`;
+
+- início da autorização: `POST /api/v1/drive/oauth/authorization`;
+
+- callback público processado pelo backend: `GET /api/v1/drive/oauth/callback`;
+
+- criação ou reutilização da árvore diária: `POST /api/v1/drive/folders/ensure`.
+
+
+
+O último endpoint recebe `project_id` e `date` e devolve o caminho funcional e os IDs
+de `originais`, `previews` e `entregas`. Refresh token, access token e credenciais não
+fazem parte das respostas.
+
+#### Lotes de upload implementados
+
+- listar e criar lote: `GET|POST /api/v1/upload-batches`;
+- consultar lote com itens: `GET /api/v1/upload-batches/{batch_id}`;
+- solicitar pausa, retomada ou cancelamento:
+  `POST /api/v1/upload-batches/{batch_id}/control`;
+- criar ou reutilizar tentativa: `POST /api/v1/upload-items/{item_id}/attempts`;
+- registrar checkpoint monotônico: `PUT /api/v1/upload-attempts/{attempt_id}/checkpoint`;
+- criar, reutilizar ou renovar sessão para o agente:
+  `POST /api/v1/agent/upload-items/{item_id}/session`;
+- consultar controle e confirmar estado aplicado:
+  `GET|POST /api/v1/agent/upload-items/{item_id}/control`.
+
+A criação exige chave de idempotência. Repetição com o mesmo conteúdo reutiliza o lote;
+a mesma chave com conteúdo diferente retorna conflito. Os contratos não expõem tokens
+nem referências de sessão retomável. A URL temporária aparece somente na resposta do
+endpoint do agente, após validar a máquina vinculada ao lote.
+
+O controle recebe `action`, `expected_version` e `idempotency_key`. A repetição da
+mesma ação com a mesma chave devolve o estado já persistido; reutilizar a chave para
+outra ação ou controlar versão desatualizada retorna conflito. Cancelamento preserva
+o histórico e pausa não reduz `confirmed_bytes`.
+
+As respostas de lote incluem `confirmed_bytes` e `progress_percent`; cada item expõe
+os mesmos campos calculados a partir do checkpoint mais recente confirmado pelo Drive.
+O catálogo informa `file_version_id` e `source_machine_id` para que o frontend forme
+lotes somente com versões físicas pertencentes à mesma máquina.
+
+O contrato exclusivo do agente recebe `machine_id` e devolve `attempt_id`, `item_id`,
+`media_file_id`, URL temporária, tamanho, algoritmo/digest de checksum e bytes
+confirmados. Não devolve caminho local. `201` indica sessão criada ou renovada; `200`
+indica reutilização. Indisponibilidade do Google retorna `502` sem expor seu payload.
+
+O comando central `UPLOAD_FILE` referencia o item em `resource_id`. Seu resultado
+contém somente `upload_item_id` e `confirmed_bytes`; URL e caminho são proibidos.
+
+- confirmar objeto após o último bloco:
+  `POST /api/v1/agent/upload-attempts/{attempt_id}/complete`.
+
+A confirmação recebe máquina e ID externo, consulta o Drive com a credencial central e
+retorna `201` na primeira persistência ou `200` na repetição idempotente.
+
+
+
 #### Operações assíncronas
 
 

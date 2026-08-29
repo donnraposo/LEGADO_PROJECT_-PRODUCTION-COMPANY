@@ -49,9 +49,7 @@ def test_gateway_lists_clients_and_projects_in_company_context() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
         if request.url.path.endswith("/clients"):
-            return httpx.Response(
-                200, json={"items": [{"id": str(client_id), "name": "Cliente"}]}
-            )
+            return httpx.Response(200, json={"items": [{"id": str(client_id), "name": "Cliente"}]})
         return httpx.Response(
             200,
             json={
@@ -114,12 +112,8 @@ def test_gateway_creates_company_client_and_multiple_projects() -> None:
     try:
         assert gateway.create_company("Produtora")["role"] == "OWNER"
         assert gateway.create_client(company_id, "Cliente")["id"] == str(client_id)
-        assert gateway.create_project(company_id, client_id, "Filme A")["id"] == str(
-            project_ids[0]
-        )
-        assert gateway.create_project(company_id, client_id, "Filme B")["id"] == str(
-            project_ids[1]
-        )
+        assert gateway.create_project(company_id, client_id, "Filme A")["id"] == str(project_ids[0])
+        assert gateway.create_project(company_id, client_id, "Filme B")["id"] == str(project_ids[1])
     finally:
         gateway.close()
 
@@ -130,9 +124,7 @@ def test_gateway_creates_company_client_and_multiple_projects() -> None:
         "/api/v1/projects",
     ]
     assert "x-company-id" not in requests[0].headers
-    assert all(
-        request.headers["x-company-id"] == str(company_id) for request in requests[1:]
-    )
+    assert all(request.headers["x-company-id"] == str(company_id) for request in requests[1:])
     assert b'"client_id"' in requests[2].content
 
 

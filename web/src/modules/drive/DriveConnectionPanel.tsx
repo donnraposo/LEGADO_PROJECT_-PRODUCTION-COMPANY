@@ -5,10 +5,11 @@ import type { BackendClient } from "../../shared/api/backendClient";
 interface DriveConnectionPanelProps {
   api: BackendClient;
   companyId: string;
+  projectId: string;
   isOwner: boolean;
 }
 
-export function DriveConnectionPanel({ api, companyId, isOwner }: DriveConnectionPanelProps) {
+export function DriveConnectionPanel({ api, companyId, projectId, isOwner }: DriveConnectionPanelProps) {
   const queryClient = useQueryClient();
   const account = useQuery({
     queryKey: ["drive-account", companyId],
@@ -25,8 +26,15 @@ export function DriveConnectionPanel({ api, companyId, isOwner }: DriveConnectio
       await queryClient.invalidateQueries({ queryKey: ["drive-account", companyId] });
     },
   });
+  const prepareFolders = useMutation({
+    mutationFn: () => {
+      const now = new Date();
+      const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      return api.ensureDriveFolders(companyId, projectId, date);
+    },
+  });
   const oauthResult = new URLSearchParams(window.location.search).get("drive");
-  const error = account.error || connect.error || disconnect.error;
+  const error = account.error || connect.error || disconnect.error || prepareFolders.error;
 
   return (
     <section className="drive-card" id="google-drive" aria-labelledby="drive-title">
@@ -42,13 +50,19 @@ export function DriveConnectionPanel({ api, companyId, isOwner }: DriveConnectio
         )}
         {oauthResult === "connected" && <p className="inline-success">Conta conectada com sucesso.</p>}
         {oauthResult === "error" && <p className="inline-error">Não foi possível concluir a conexão. Tente novamente.</p>}
+        {prepareFolders.data && <p className="inline-success">Estrutura preparada: {prepareFolders.data.path}</p>}
         {error && <p className="inline-error">{error.message}</p>}
       </div>
       {isOwner ? (
         account.data?.connected ? (
-          <button className="ghost-button dark" type="button" disabled={disconnect.isPending} onClick={() => disconnect.mutate()}>
-            {disconnect.isPending ? "Desconectando…" : "Desconectar"}
-          </button>
+          <div className="drive-actions">
+            <button className="primary-button" type="button" disabled={!projectId || prepareFolders.isPending} onClick={() => prepareFolders.mutate()}>
+              {prepareFolders.isPending ? "Preparando…" : "Preparar pastas de hoje"}
+            </button>
+            <button className="ghost-button dark" type="button" disabled={disconnect.isPending} onClick={() => disconnect.mutate()}>
+              {disconnect.isPending ? "Desconectando…" : "Desconectar"}
+            </button>
+          </div>
         ) : (
           <button className="primary-button" type="button" disabled={!companyId || connect.isPending} onClick={() => connect.mutate()}>
             {connect.isPending ? "Abrindo Google…" : "Conectar conta Google"}

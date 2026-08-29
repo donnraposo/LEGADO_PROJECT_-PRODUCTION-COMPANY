@@ -11,8 +11,8 @@
 - Fases 2 e 3 do MVP: **implementadas e aguardando validação funcional**.
 - Fase 4: **tecnicamente concluída e aguardando ensaio funcional**.
 - Fase 5: **frontend executável no Docker**.
-- Fase 6: **em implementação; OAuth Google conectado e validado**.
-- Próxima implementação: **estrutura de pastas, lotes e upload retomável no Drive**.
+- Fase 6: **em implementação; OAuth, árvore, lotes, sessão e envio em blocos implementados**.
+- Próxima implementação: **repetir o ensaio real e implementar a interface de lotes**.
 - Documento original: [monólito v0.12 preservado](docs/arquivo/PROJETO_AUDIOVISUAL_MONOLITO_v0.12.md).
 
 ## Leitura rápida
@@ -71,6 +71,6 @@
 
 ## Próxima etapa
 
-Fechar os ensaios funcionais das Fases 2 e 3 e arquitetar a Fase 4. A próxima
-implementação deve adicionar confirmação explícita, resolução de conflitos,
-checkpoints e movimentação local sem exclusão ou sobrescrita.
+Fechar os ensaios funcionais pendentes do agente e continuar a Fase 6. A próxima
+implementação deve ensaiar o envio direto no Drive real, confirmar o objeto no catálogo
+e adicionar o acompanhamento dos lotes no frontend.

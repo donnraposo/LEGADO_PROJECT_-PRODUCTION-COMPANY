@@ -153,9 +153,7 @@ def test_window_creates_company_client_and_multiple_projects(tmp_path, monkeypat
         session,
     )
     backend = FakeCreationBackend()
-    names = iter(
-        ["Produtora", "Cliente", "Filme A", "Filme B", "Outro cliente", "Filme C"]
-    )
+    names = iter(["Produtora", "Cliente", "Filme A", "Filme B", "Outro cliente", "Filme C"])
     monkeypatch.setattr(QInputDialog, "getText", lambda *_args: (next(names), True))
     monkeypatch.setattr(
         window, "_run", lambda operation, success, failure=None: success(operation())
@@ -211,9 +209,7 @@ def test_window_only_shows_machine_retry_after_connection_failure(tmp_path) -> N
     assert window._connect.text() == "Tentar novamente"
     assert not window._connect.isHidden()
     assert window._connect.isEnabled()
-    assert window._status.text() == (
-        "Não foi possível conectar esta máquina: backend indisponível"
-    )
+    assert window._status.text() == ("Não foi possível conectar esta máquina: backend indisponível")
     window.close()
     application.processEvents()
 

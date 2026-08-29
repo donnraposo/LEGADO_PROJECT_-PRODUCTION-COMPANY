@@ -11,6 +11,9 @@ export interface Project {
 
 export type Tag = components["schemas"]["Tag"];
 export type MediaFile = components["schemas"]["MediaFile"];
+export type UploadBatch = components["schemas"]["UploadBatch"];
+export type UploadBatchDetail = components["schemas"]["UploadBatchDetail"];
+export type CreateUploadBatch = components["schemas"]["CreateUploadBatchRequest"];
 
 export interface Collection<T> {
   items: T[];
@@ -25,4 +28,13 @@ export interface DriveAccount {
 
 export interface DriveAuthorization {
   authorization_url: string;
+}
+
+export interface DriveFolderTree {
+  path: string;
+  folders: {
+    originais: string;
+    previews: string;
+    entregas: string;
+  };
 }

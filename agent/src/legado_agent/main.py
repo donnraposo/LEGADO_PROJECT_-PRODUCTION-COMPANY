@@ -13,6 +13,9 @@ from legado_agent.infrastructure.persistence.sqlite_local_repository import SQLi
 from legado_agent.infrastructure.persistence.sqlite_organization_repository import (
     SQLiteOrganizationRepository,
 )
+from legado_agent.infrastructure.persistence.sqlite_upload_repository import (
+    SQLiteUploadRepository,
+)
 
 
 def ssl_self_test() -> int:
@@ -38,6 +41,7 @@ def main() -> int:
         SQLiteAnalysisRepository(database),
         SQLiteOrganizationRepository(database),
         AgentSession(),
+        SQLiteUploadRepository(database),
     )
     window.show()
     return application.exec()

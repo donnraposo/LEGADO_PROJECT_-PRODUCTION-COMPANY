@@ -4,7 +4,7 @@
 
 > Para retomada por outra pessoa ou IA, use [Continuidade do MVP](continuidade-mvp.md).
 
-**Atualizado em:** 25 de agosto de 2026.
+**Atualizado em:** 28 de agosto de 2026.
 
 ## Concluído e aprovado
 
@@ -26,8 +26,8 @@
 
 ## Próxima etapa
 
-OAuth real do Google Drive concluído. A próxima etapa executável é criar a estrutura
-idempotente de pastas, modelar lotes e preparar o upload retomável direto do agente.
+OAuth real, estrutura idempotente de pastas, lotes, sessão retomável e envio em blocos
+concluídos. A próxima etapa é ensaiar o fluxo real e confirmar o objeto no catálogo.
 
 ### Implementação incremental em andamento
 
@@ -64,7 +64,9 @@ idempotente de pastas, modelar lotes e preparar o upload retomável direto do ag
 - concluída a organização local segura com confirmação, checkpoints e retomada;
 - implementado o frontend inicial com autenticação, catálogo e painel do Drive;
 - validada a conexão OAuth com uma conta Google real;
-- próxima implementação: árvore idempotente de pastas, histórico de contas e lotes.
+- concluídos ensaio real, confirmação de integridade e painel de lotes com progresso;
+- próxima implementação: pausa, retomada, cancelamento e tratamento funcional de
+  disco, cota e integridade no frontend.
 
 Concluir a infraestrutura além da base local já validada:
 
@@ -77,7 +79,7 @@ Concluir a infraestrutura além da base local já validada:
 
 ## Depois da base atual
 
-1. concluir pastas, lotes e upload retomável;
+1. concluir o ensaio real e a confirmação do upload retomável;
 2. adicionar acompanhamento em tempo real e comandos de pausa, retomada e cancelamento;
 3. concluir aprovações, compartilhamento e downloads;
 4. executar a validação integral do MVP e preparar a operação piloto.

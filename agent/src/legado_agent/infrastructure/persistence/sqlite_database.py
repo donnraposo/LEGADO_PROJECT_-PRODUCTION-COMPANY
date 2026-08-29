@@ -107,6 +107,22 @@ class SQLiteDatabase:
         CREATE INDEX ix_organization_items_operation_status
             ON organization_items(operation_id, status);
         """,
+        """
+        CREATE TABLE upload_jobs (
+            item_id TEXT PRIMARY KEY,
+            media_file_id TEXT NOT NULL,
+            source_path TEXT NOT NULL,
+            attempt_id TEXT NOT NULL,
+            size_bytes INTEGER NOT NULL,
+            checksum_sha256 TEXT NOT NULL,
+            confirmed_bytes INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL,
+            error_code TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX ix_upload_jobs_status ON upload_jobs(status, updated_at);
+        """,
     )
 
     def __init__(self, path: Path) -> None:

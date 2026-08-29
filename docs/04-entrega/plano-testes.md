@@ -52,12 +52,86 @@ entrega assíncrona, liberação da tarefa, heartbeat automático e recuperaçã
 Ruff permaneceu aprovado. A revalidação visual do código corrigido está pendente.
 
 **Estado:** EM EXECUÇÃO. Baselines do backend e do agente registradas até 21 de agosto
-de 2026. Em 25 de agosto, o OAuth recebeu 3 testes de integração, o cliente foi
+de 2026. Em 25 de agosto, o OAuth recebeu testes de integração, o cliente foi
 reconhecido pelo endpoint do Google, a URL foi validada com `drive.file`, acesso
 offline e `state`, e uma conta real foi conectada pelo frontend. A nova marca passou
 na geração OpenAPI, checagem TypeScript, build Vite, JSON do Keycloak e saúde dos
 containers. O teste da janela renomeada permanece pendente por indisponibilidade do
 inicializador Python neste terminal.
+
+**Incremento da árvore do Drive em 26 de agosto de 2026:** o módulo Drive passou a
+4 testes de integração e a suíte backend totalizou 61 testes. O ensaio real criou oito
+pastas, confirmou tipo, pai e ausência de lixeira pela API do Drive e reutilizou os
+mesmos registros na segunda execução. Ruff, migration `drive.0002`, OpenAPI,
+TypeScript e build Vite foram aprovados.
+
+**Incremento de lotes em 28 de agosto de 2026:** histórico de contas e persistência
+de lotes, itens, tentativas e checkpoints foram validados. A suíte backend totalizou
+62 testes; OpenAPI, tipos TypeScript, 4 testes frontend e build Vite foram aprovados.
+
+**Incremento de sessão retomável em 28 de agosto de 2026:** criação cifrada,
+reutilização, expiração, renovação e vínculo à máquina foram cobertos por teste integrado.
+O ensaio contra a API real do Drive permanece pendente.
+
+**Incremento de envio em blocos em 28 de agosto de 2026:** blocos alinhados, último
+bloco variável, renovação, checkpoints backend/SQLite e ausência da URL no banco local
+foram cobertos. A suíte do agente totalizou 35 testes.
+
+Casos cobertos no incremento:
+
+- divisão em blocos alinhados de 256 KiB e último bloco variável;
+- interpretação de `308`, `200` e confirmação pelo cabeçalho `Range`;
+- expiração da primeira sessão e renovação sem duplicar o trabalho;
+- checkpoints enviados ao backend após cada avanço confirmado;
+- persistência e recuperação do trabalho no SQLite v4;
+- ausência de coluna de URL retomável no banco local;
+- validação de tamanho e SHA-256 antes do transporte;
+- dependências do caso de uso mantidas atrás de portas abstratas.
+- confirmação idempotente do objeto, validação de pasta/nome/tamanho/SHA-256 e
+  sincronização do catálogo cobertas pelo gateway simulado;
+
+Casos ainda obrigatórios no ensaio real:
+
+- criação do objeto em `Originais` com nome e tamanho esperados;
+- interrupção de rede após ao menos um bloco e retomada no byte confirmado;
+- expiração real ou simulada da sessão durante arquivo descartável;
+- confirmação de ID, tamanho, checksum/metadados e vínculo ao catálogo;
+- verificação de ausência de URL, token e caminho nos logs e no frontend;
+- limpeza manual somente do arquivo descartável criado para o ensaio.
+
+**Tentativa de ensaio real em 28 de agosto de 2026:** interrompida antes da criação da
+sessão porque o container não resolveu `oauth2.googleapis.com`. Nenhum arquivo foi
+criado. O ensaio deverá ser repetido quando o DNS externo do Docker estiver operacional.
+
+**Validação operacional em 29 de agosto de 2026:** Docker Desktop reativado e
+composição completa iniciada. PostgreSQL, Redis, backend, três processos Celery,
+frontend, Keycloak e Mailpit ficaram ativos; backend e frontend foram recriados.
+Interface, `health/live`, `health/ready`, descoberta OIDC e Mailpit responderam
+HTTP `200`. Não houve execução das suítes automatizadas nem ensaio real do Drive
+nesta validação.
+
+**Ensaio real em 29 de agosto de 2026:** o backend Docker resolveu
+`oauth2.googleapis.com` e `www.googleapis.com` após a reativação dos containers. Uma
+sessão retomável enviou um arquivo descartável de 17 MiB em blocos de 8 MiB. Após o
+primeiro `308`, a sessão foi consultada e confirmou 8 MiB; o envio foi retomado nesse
+byte, recebeu novo `308` em 16 MiB e concluiu com `200`. O objeto
+`1AKCnXgcDJTU-776goINqlcwinGql4Aor` foi confirmado em `Originais`; tamanho e SHA-256
+do Drive coincidiram com os dados locais.
+
+**Incremento do painel de lotes em 29 de agosto de 2026:** catálogo ampliado com
+versão física e máquina de origem; respostas de lote passaram a informar bytes
+confirmados e percentual geral/individual. O frontend cria lote por projeto, data,
+categoria e arquivos da mesma máquina, preserva a chave idempotente durante repetição,
+recupera o lote após recarga e consulta progresso até estado final. Mensagens técnicas
+foram traduzidas para linguagem simples e o CSS foi consolidado em tokens. A suíte
+backend totalizou 63 testes; Ruff, 5 testes frontend, TypeScript e build Vite passaram.
+
+**Incremento de controles operacionais em 29 de agosto de 2026:** pausa, retomada e
+cancelamento passaram a ser solicitações persistidas, versionadas e idempotentes. O
+agente consulta o controle antes de cada bloco e confirma o estado aplicado sem reduzir
+bytes. Internet, autenticação, cota, disco e integridade possuem códigos estáveis e
+mensagens simples. Foram aprovados 36 testes do agente, testes integrados de controle,
+Ruff, migrations, 64 testes do backend, 5 testes do frontend, TypeScript e build Vite.
 
 Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empresas, contratos de API, idempotência, retomada de upload, integração com Drive, segurança, auditoria e fluxos ponta a ponta.
 
@@ -83,9 +157,18 @@ Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empr
 - refresh token persistido exclusivamente de forma criptografada;
 - resposta de estado não contém token;
 - callback devolve ao frontend apenas sucesso ou erro;
-- 3 testes de integração OAuth aprovados em 25 de agosto de 2026;
+- 4 testes de integração do módulo Drive aprovados, cobrindo OAuth, autorização e árvore;
+- teste integrado de lotes aprovado, cobrindo criação idempotente, conflito de chave,
+  reutilização de tentativa e checkpoint monotônico;
+- 64 testes backend e 5 testes frontend aprovados no fechamento de 29 de agosto de 2026;
+- sessão cifrada, reutilização idempotente, vínculo à máquina e renovação após
+  expiração cobertos por teste integrado com gateway simulado;
 - credenciais OAuth reconhecidas pelo Google e autorização real concluída pelo frontend;
-- criação de pastas e upload real permanecem pendentes e usarão conteúdo descartável.
+- criação real e idempotente das pastas aprovada em 26 de agosto de 2026;
+- ensaio real do upload aprovado com arquivo descartável de 17 MiB, interrupção após
+  8 MiB, retomada no byte confirmado e validação de ID, tamanho e SHA-256;
+- controles cobertos por versão esperada, repetição idempotente, aplicação no próximo
+  bloco seguro e checkpoint sem regressão.
 
 - normalização de nomes de clientes e projetos;
 - criação dentro da empresa ativa;

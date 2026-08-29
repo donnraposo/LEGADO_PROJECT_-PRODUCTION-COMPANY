@@ -4,6 +4,146 @@
  */
 
 export interface paths {
+    "/api/v1/upload-batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista lotes acessíveis da empresa */
+        get: operations["listUploadBatches"];
+        put?: never;
+        /** Cria um lote idempotente vinculado à conta e às pastas do Drive */
+        post: operations["createUploadBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/upload-batches/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consulta lote e itens acessíveis */
+        get: operations["getUploadBatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/upload-batches/{batch_id}/control": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Solicita pausa, retomada ou cancelamento idempotente do lote */
+        post: operations["controlUploadBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/upload-items/{item_id}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cria ou reutiliza a tentativa ativa do item */
+        post: operations["createUploadAttempt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/upload-attempts/{attempt_id}/checkpoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Registra checkpoint monotônico confirmado pelo Drive */
+        put: operations["recordUploadCheckpoint"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent/upload-items/{item_id}/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cria, reutiliza ou renova a sessão retomável destinada ao agente
+         * @description A URL sensível é entregue somente neste contrato do agente e nunca integra respostas web comuns.
+         */
+        post: operations["ensureAgentUploadSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent/upload-attempts/{attempt_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirma pela API do Drive o objeto enviado pelo agente */
+        post: operations["confirmAgentUploadObject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/drive/folders/ensure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cria ou reutiliza a árvore diária de pastas do projeto no Drive */
+        post: operations["ensureDriveFolderTree"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/drive/account": {
         parameters: {
             query?: never;
@@ -515,6 +655,143 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        UploadControlRequest: {
+            /** @enum {string} */
+            action: "PAUSE" | "RESUME" | "CANCEL";
+            expected_version: number;
+            idempotency_key: string;
+        };
+        CreateUploadBatchRequest: {
+            /** Format: uuid */
+            project_id: string;
+            /** Format: uuid */
+            machine_id: string;
+            /** Format: date */
+            folder_date: string;
+            idempotency_key: string;
+            items: {
+                /** Format: uuid */
+                file_version_id: string;
+                /** @enum {string} */
+                destination_category: "ORIGINAIS" | "PREVIEWS" | "ENTREGAS";
+                final_name: string;
+            }[];
+        };
+        UploadBatch: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            project_id: string;
+            /** Format: uuid */
+            machine_id: string;
+            /** Format: uuid */
+            drive_account_id: string;
+            /** Format: date */
+            folder_date: string;
+            status: string;
+            total_items: number;
+            total_bytes: number;
+            confirmed_bytes: number;
+            progress_percent: number;
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+        };
+        UploadBatchDetail: components["schemas"]["UploadBatch"] & {
+            items: components["schemas"]["UploadItem"][];
+        };
+        UploadBatchCollection: {
+            items: components["schemas"]["UploadBatch"][];
+            next_cursor: string | null;
+        };
+        UploadItem: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            file_version_id: string;
+            /** Format: uuid */
+            destination_folder_id: string;
+            /** @enum {string} */
+            destination_category: "ORIGINAIS" | "PREVIEWS" | "ENTREGAS";
+            final_name: string;
+            size_bytes: number;
+            confirmed_bytes: number;
+            progress_percent: number;
+            status: string;
+            position: number;
+            version: number;
+        };
+        UploadAttempt: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            item_id: string;
+            sequence: number;
+            status: string;
+        };
+        UploadCheckpoint: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            attempt_id: string;
+            sequence: number;
+            confirmed_bytes: number;
+            /** @enum {string} */
+            source: "DRIVE";
+        };
+        EnsureUploadSessionRequest: {
+            /** Format: uuid */
+            machine_id: string;
+        };
+        AgentUploadSession: {
+            /** Format: uuid */
+            attempt_id: string;
+            /** Format: uuid */
+            item_id: string;
+            sequence: number;
+            /** @enum {string} */
+            status: "ACTIVE";
+            /** Format: uri */
+            session_url: string;
+            confirmed_bytes: number;
+            /** Format: uuid */
+            media_file_id: string;
+            size_bytes: number;
+            checksum_algorithm: string;
+            checksum_digest: string;
+        };
+        CompleteUploadRequest: {
+            /** Format: uuid */
+            machine_id: string;
+            provider_object_id: string;
+        };
+        DriveObject: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            upload_item_id: string;
+            provider_object_id: string;
+            name: string;
+            size_bytes: number;
+            checksum_sha256: string;
+            /** @enum {string} */
+            status: "CONFIRMED";
+        };
+        EnsureDriveFoldersRequest: {
+            /** Format: uuid */
+            project_id: string;
+            /** Format: date */
+            date: string;
+        };
+        DriveFolderTree: {
+            /** @example Gerenciador de Áudio Visual/Empresa/Projeto/2026.08/25 */
+            path: string;
+            folders: {
+                originais: string;
+                previews: string;
+                entregas: string;
+            };
+        };
         DriveAccount: {
             connected: boolean;
             /** Format: email */
@@ -575,6 +852,10 @@ export interface components {
             description: string;
             observations: string;
             size_bytes: number;
+            /** Format: uuid */
+            file_version_id: string;
+            /** Format: uuid */
+            source_machine_id: string | null;
             checksum: {
                 algorithm: string;
                 digest: string;
@@ -778,6 +1059,318 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listUploadBatches: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lotes de upload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadBatchCollection"];
+                };
+            };
+        };
+    };
+    createUploadBatch: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUploadBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Repetição idempotente */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadBatchDetail"];
+                };
+            };
+            /** @description Lote criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadBatchDetail"];
+                };
+            };
+            /** @description Chave reutilizada com dados diferentes ou arquivo em lote ativo */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getUploadBatch: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lote de upload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadBatchDetail"];
+                };
+            };
+        };
+    };
+    controlUploadBatch: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadControlRequest"];
+            };
+        };
+        responses: {
+            /** @description Controle solicitado ou reutilizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadBatchDetail"];
+                };
+            };
+        };
+    };
+    createUploadAttempt: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tentativa disponível */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadAttempt"];
+                };
+            };
+        };
+    };
+    recordUploadCheckpoint: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                attempt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirmed_bytes: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Checkpoint persistido ou reutilizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadCheckpoint"];
+                };
+            };
+            /** @description Checkpoint regressivo */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ensureAgentUploadSession: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnsureUploadSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Sessão ativa reutilizada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentUploadSession"];
+                };
+            };
+            /** @description Nova sessão criada ou renovada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentUploadSession"];
+                };
+            };
+            /** @description Google Drive indisponível sem invalidar prematuramente a sessão */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    confirmAgentUploadObject: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                attempt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Confirmação idempotente reutilizada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveObject"];
+                };
+            };
+            /** @description Objeto confirmado e persistido */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveObject"];
+                };
+            };
+        };
+    };
+    ensureDriveFolderTree: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnsureDriveFoldersRequest"];
+            };
+        };
+        responses: {
+            /** @description Árvore de pastas disponível */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DriveFolderTree"];
+                };
+            };
+            /** @description Conta desconectada, projeto inválido ou dados inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Operação restrita ao Proprietário */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Falha na comunicação com o Google Drive */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Credenciais OAuth ainda não configuradas */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getDriveAccount: {
         parameters: {
             query?: never;

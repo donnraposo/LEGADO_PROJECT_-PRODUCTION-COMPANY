@@ -7,9 +7,10 @@
 
 **Estado:** EM IMPLEMENTAÇÃO desde 1º de agosto de 2026.
 
-**Última consolidação:** 25 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
+**Última consolidação:** 29 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
 3 implementadas e aguardando validação funcional; Fase 4 tecnicamente concluída e
-aguardando ensaio funcional; Fase 5 executável e fundação OAuth da Fase 6 implementada.
+aguardando ensaio funcional; Fase 5 executável e OAuth, árvore, lotes, sessão retomável,
+envio real em blocos e painel de lotes da Fase 6 implementados.
 
 Registro operacional do software implementado, das validações executadas, das limitações conhecidas e do ponto obrigatório de continuidade.
 
@@ -46,6 +47,26 @@ Registro operacional do software implementado, das validações executadas, das 
 - registro da máquina iniciado automaticamente após carregar a empresa;
 - ação `Tentar novamente` oculta no fluxo normal e exibida apenas após falha;
 - realm local declarativo com clientes `legado-agent`, `legado-web` e `legado-api`.
+
+### Upload direto no agente
+
+**Estado:** IMPLEMENTADO COM GATEWAY SIMULADO — AGUARDA ENSAIO NO DRIVE REAL.
+
+- comando `UPLOAD_FILE` referencia somente o item central;
+- backend devolve sessão, versão lógica, tamanho e checksum após validar a máquina;
+- caminho local é resolvido pelo `media_file_id` exclusivamente no SQLite;
+- tamanho e SHA-256 são verificados antes do envio;
+- blocos padrão de 8 MiB respeitam o múltiplo de 256 KiB;
+- respostas `308` avançam somente pelo byte confirmado pelo Drive;
+- respostas `404/410` renovam a sessão em nova tentativa;
+- respostas `200/201` concluem o transporte;
+- SQLite v4 persiste trabalho, tentativa, progresso e falha resumida;
+- URL retomável permanece apenas em memória;
+- falha de rede deixa o trabalho `INTERRUPTED` e retomável;
+- resultado do comando contém somente item e bytes confirmados.
+- ID final devolvido pelo Drive é confirmado pelo backend antes da conclusão;
+- objeto físico persiste conta, pasta, nome, tamanho, checksum e tipo MIME;
+- catálogo muda para `SINCRONIZADO` somente após validação central idempotente;
 
 ### Análise e prévia local
 
@@ -95,6 +116,8 @@ Registro operacional do software implementado, das validações executadas, das 
 - token, segredo do cliente e código de autorização não são enviados ao frontend;
 - conexão isolada por empresa e gerenciamento exclusivo do Proprietário;
 - desconexão remove imediatamente a credencial e os dados locais da conta;
+- árvore idempotente `Empresa/Projeto/AAAA.MM/DD` com destinos `Originais`, `Previews`
+  e `Entregas`, IDs e pais persistidos;
 - callback retorna somente `connected` ou `error` ao frontend;
 - variáveis de ambiente e contrato OpenAPI adicionados sem segredos reais.
 - credenciais carregadas pelo ambiente sem exposição em logs ou respostas;
@@ -215,6 +238,8 @@ Registro operacional do software implementado, das validações executadas, das 
 
 ## Contratos disponíveis
 
+- conexão, consulta e desconexão da conta Google Drive;
+- criação ou reutilização da árvore diária em `/api/v1/drive/folders/ensure`;
 - saúde do processo e prontidão;
 - usuário autenticado;
 - empresas;
@@ -249,6 +274,8 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - `catalog/0005_fileversion_ingestion_id.py`: ingestão idempotente originada pelo agente.
 - `operations/0001_initial.py`: máquinas, presença e comandos persistidos.
 - `operations/0002_agent_command_execution.py`: progresso, resultado e marcos de execução.
+- `drive/0001_initial.py`: conta OAuth e estado temporário de autorização.
+- `drive/0002_drivefoldermodel.py`: IDs e hierarquia idempotente das pastas do Drive.
 
 ## Arquitetura aplicada
 
@@ -269,6 +296,7 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - PostgreSQL, Redis, backend, workers, Celery Beat e Mailpit operacionais;
 - endpoints `/health/live` e `/health/ready` aprovados após a reconstrução;
 - 57 testes automatizados do backend aprovados;
+- 64 testes automatizados do backend aprovados após os controles operacionais;
 - lint Ruff aprovado;
 - `makemigrations --check --dry-run` sem mudanças pendentes;
 - testes de identidade, criptografia, empresas, projetos, convites e permissões;
@@ -281,6 +309,14 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - testes de estados do catálogo, idempotência, versão, vínculo de máquina e isolamento empresarial;
 - testes de auditoria idempotente de tags, histórico paginado, restauração e filtros combinados;
 - OpenAPI 3.1 validado sem erros; permanecem avisos documentais não bloqueadores;
+- contrato regenerado no frontend, migration `drive.0002` aplicada e build Vite aprovado;
+- ensaio real da árvore aprovado em 26 de agosto de 2026: oito pastas confirmadas pela
+  API do Google Drive, todas ativas, com um único pai, e segunda execução idempotente
+  sem novos registros;
+- sessão retomável coberta por teste integrado: URL cifrada, reutilização, vínculo à
+  máquina, checkpoint confirmado, expiração e renovação em nova tentativa;
+- agente envia blocos alinhados diretamente ao Drive, persiste checkpoints no SQLite
+  v4 e recupera sessões expiradas sem armazenar a URL temporária;
 - migrations de catálogo e operações aplicadas ao PostgreSQL local.
 - 7 testes automatizados do agente aprovados em runtime auxiliar Python 3.12;
 - Ruff do agente aprovado;
@@ -288,14 +324,14 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - JSON do realm Keycloak e composição Docker validados estaticamente.
 - 31 testes automatizados do agente aprovados após o incremento administrativo e
   a correção do ciclo de vida assíncrono;
-- upgrade SQLite v1→v3 validado sem perda da identificação da instalação;
+- upgrade SQLite v1→v4 validado sem perda da identificação da instalação;
 - conteúdo e horário dos arquivos de origem preservados nos testes;
 - recuperação da prévia e persistência da seleção validadas;
 - limites entre domínio, aplicação e infraestrutura do agente validados automaticamente.
 - movimentação segura, cópia verificada, checkpoints e retomada validados com arquivos temporários;
 - contrato de ingestão idempotente implementado e Ruff aprovado no backend;
 - migration `catalog.0005` aplicada no PostgreSQL local;
-- 4 testes do frontend, checagem TypeScript e build Vite aprovados;
+- 5 testes do frontend, checagem TypeScript e build Vite aprovados;
 - imagem Docker do frontend construída, composição validada e serviço iniciado;
 - frontend e proxy de saúde do backend responderam HTTP `200`.
 - criação no gateway e na tela do agente validada com múltiplos projetos;
@@ -303,6 +339,21 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - login real do agente e criação real de empresa confirmados no backend com HTTP `201`;
 - retenção da tarefa no `QThreadPool`, conexão automática e recuperação após falha
   cobertas nos testes da interface;
+- composição local reativada e validada em 29 de agosto de 2026 com PostgreSQL,
+  Redis, backend, três processos Celery, frontend, Keycloak e Mailpit operacionais;
+- interface, saúde do backend, prontidão, descoberta OIDC e Mailpit responderam
+  HTTP `200` após a recriação dos serviços da aplicação.
+- ensaio real de 17 MiB retomado no byte confirmado e validado por ID, tamanho e SHA-256;
+- painel cria e recupera lotes, apresenta progresso geral/individual e encerra polling
+  em estado final; suíte completa do backend totalizou 63 testes;
+- CSS consolidado em tokens centrais e build de produção aprovado.
+- controles idempotentes de pausa, retomada e cancelamento persistidos e aplicados
+  pelo agente antes do próximo bloco;
+- falhas normalizadas para internet, autenticação, cota, disco e integridade, mantendo
+  checkpoint monotônico e mensagem simples no painel.
+- 36 testes automatizados do agente, 5 testes do frontend, checagem TypeScript, build
+  Vite e 64 testes do backend aprovados no fechamento dos controles operacionais;
+- backend e frontend reconstruídos após as migrations e confirmados saudáveis.
 
 ## Limitações conhecidas
 
@@ -317,20 +368,18 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - Fases 3 e 4 ainda requerem ensaio manual da interface com Python 3.14;
 - fluxo real do frontend e OAuth Google validados com conta de ensaio;
 - gestão web de clientes, projetos, acessos, máquinas, operações e auditoria permanece pendente;
-- criação idempotente de pastas, lotes, upload retomável, WebSocket, aprovações e
-  downloads permanecem pendentes;
+- WebSocket, aprovações, downloads e ensaio visual do painel permanecem pendentes.
 
 ## Próxima etapa obrigatória
 
 Revalidar o agente atual e continuar a Fase 6:
 
 1. revalidar a conclusão visual da criação e o registro automático da máquina;
-2. definir e implementar a árvore idempotente de pastas no Drive;
-3. criar contratos de armazenamento e modelar histórico de conta, pasta, lote,
-   item, tentativa e checkpoint;
-4. preservar upload direto agente–Drive sem transportar binário pelo backend;
-5. preservar a conexão Google implementada e adicionar a operação dos lotes no frontend;
-6. exibir progresso, estados, pausa, retomada, cancelamento e erros acionáveis;
+2. preservar a árvore idempotente validada com a conta real de ensaio;
+3. preservar contratos, histórico, lotes, tentativas, checkpoints e sessões implementados;
+4. preservar o envio real agente–Drive e a confirmação de integridade aprovados;
+5. validar visualmente criação, recuperação, progresso e controles dos lotes no frontend;
+6. ensaiar cota, falta de espaço e expiração de autenticação com serviços reais;
 7. implementar detecção automática de discos externos no agente;
 8. executar o ensaio completo em Python 3.14 quando o runtime estiver disponível;
 9. recompilar o instalador somente após autorização explícita.
@@ -348,6 +397,10 @@ em [Continuidade do MVP](continuidade-mvp.md).
 - organização exige confirmação explícita e nunca sobrescreve um destino;
 - cada movimentação concluída possui checkpoint idempotente;
 - frontend recupera o estado do lote após recarregar a página;
+- painel permite selecionar projeto, data, categoria e arquivos da mesma máquina;
+- progresso geral e individual usa bytes confirmados pelo Drive e atualização periódica;
+- estilos do frontend usam tokens CSS centralizados para cores, superfícies, sombras,
+  raios e dimensões estruturais;
 - comandos do frontend respeitam autorização e o próximo bloco seguro;
 - nenhum segredo OAuth ou URL retomável aparece no navegador ou nos logs;
 - Ruff e suítes afetadas permanecem aprovados.

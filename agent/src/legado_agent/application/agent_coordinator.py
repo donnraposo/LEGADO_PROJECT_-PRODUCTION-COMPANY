@@ -2,14 +2,21 @@ import platform
 import socket
 from uuid import UUID
 
+from legado_agent.application.execute_upload_use_case import ExecuteUploadUseCase, UploadFileError
 from legado_agent.application.ports.backend_gateway import BackendGateway
 from legado_agent.application.ports.local_repository import LocalRepository
 
 
 class AgentCoordinator:
-    def __init__(self, repository: LocalRepository, backend: BackendGateway) -> None:
+    def __init__(
+        self,
+        repository: LocalRepository,
+        backend: BackendGateway,
+        upload_use_case: ExecuteUploadUseCase | None = None,
+    ) -> None:
         self._repository = repository
         self._backend = backend
+        self._upload_use_case = upload_use_case
 
     def connect(self, company_id: UUID) -> UUID:
         machine_id = self._backend.heartbeat(
@@ -34,9 +41,7 @@ class AgentCoordinator:
                 continue
             current = command
             if current.status == "PENDING":
-                current = self._backend.update_command(
-                    company_id, current, "ACKNOWLEDGED"
-                )
+                current = self._backend.update_command(company_id, current, "ACKNOWLEDGED")
                 self._repository.update_command(company_id, current)
             if current.status == "ACKNOWLEDGED":
                 current = self._backend.update_command(
@@ -52,6 +57,51 @@ class AgentCoordinator:
                         progress_percent=100,
                         result={"message": "pong"},
                     )
+                elif (
+                    current.command_type == "UPLOAD_FILE"
+                    and current.resource_id is not None
+                    and self._upload_use_case is not None
+                ):
+                    try:
+                        job = self._upload_use_case.execute(
+                            company_id, machine_id, current.resource_id
+                        )
+                        progress = (
+                            int(job.confirmed_bytes * 100 / job.size_bytes) if job.size_bytes else 0
+                        )
+                        command_status = (
+                            "SUCCEEDED"
+                            if job.status == "SUCCEEDED"
+                            else ("CANCELLED" if job.status == "CANCELLED" else "RUNNING")
+                        )
+                        current = self._backend.update_command(
+                            company_id,
+                            current,
+                            command_status,
+                            progress_percent=100 if job.status == "SUCCEEDED" else progress,
+                            result={
+                                "upload_item_id": str(job.item_id),
+                                "confirmed_bytes": job.confirmed_bytes,
+                                "state": job.status,
+                            },
+                        )
+                    except UploadFileError as exc:
+                        job = self._upload_use_case.repository.get(current.resource_id)
+                        progress = (
+                            int(job.confirmed_bytes * 100 / job.size_bytes)
+                            if job and job.size_bytes
+                            else current.progress_percent
+                        )
+                        current = self._backend.update_command(
+                            company_id,
+                            current,
+                            "RUNNING",
+                            progress_percent=progress,
+                            result={"state": "INTERRUPTED"},
+                            failure_code=str(exc)
+                            if str(exc).isupper()
+                            else (job.error_code if job else "INTERNET_UNAVAILABLE"),
+                        )
                 else:
                     current = self._backend.update_command(
                         company_id,

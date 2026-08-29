@@ -15,6 +15,8 @@ class MediaFileSummary:
     description: str
     observations: str
     size_bytes: int
+    file_version_id: UUID
+    source_machine_id: UUID | None
     checksum_algorithm: str
     checksum_digest: str
     recorded_at: datetime | None

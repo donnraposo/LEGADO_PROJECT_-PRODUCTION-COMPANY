@@ -1,4 +1,4 @@
-import type { Collection, Company, CurrentUser, DriveAccount, DriveAuthorization, MediaFile, Project, Tag } from "./types";
+import type { Collection, Company, CreateUploadBatch, CurrentUser, DriveAccount, DriveAuthorization, DriveFolderTree, MediaFile, Project, Tag, UploadBatch, UploadBatchDetail } from "./types";
 
 type TokenProvider = () => Promise<string>;
 
@@ -67,6 +67,38 @@ export class BackendClient {
 
   disconnectDrive(companyId: string) {
     return this.request<void>("/api/v1/drive/account", { method: "DELETE" }, companyId);
+  }
+
+  ensureDriveFolders(companyId: string, projectId: string, date: string) {
+    return this.request<DriveFolderTree>(
+      "/api/v1/drive/folders/ensure",
+      { method: "POST", body: JSON.stringify({ project_id: projectId, date }) },
+      companyId,
+    );
+  }
+
+  uploadBatches(companyId: string) {
+    return this.request<Collection<UploadBatch>>("/api/v1/upload-batches", {}, companyId);
+  }
+
+  uploadBatch(companyId: string, batchId: string) {
+    return this.request<UploadBatchDetail>(`/api/v1/upload-batches/${batchId}`, {}, companyId);
+  }
+
+  createUploadBatch(companyId: string, body: CreateUploadBatch) {
+    return this.request<UploadBatchDetail>(
+      "/api/v1/upload-batches",
+      { method: "POST", body: JSON.stringify(body) },
+      companyId,
+    );
+  }
+
+  controlUploadBatch(companyId: string, batchId: string, action: "PAUSE" | "RESUME" | "CANCEL", expectedVersion: number, idempotencyKey: string) {
+    return this.request<UploadBatchDetail>(
+      `/api/v1/upload-batches/${batchId}/control`,
+      { method: "POST", body: JSON.stringify({ action, expected_version: expectedVersion, idempotency_key: idempotencyKey }) },
+      companyId,
+    );
   }
 
   private async request<T>(path: string, init: RequestInit = {}, companyId?: string): Promise<T> {

@@ -8,7 +8,7 @@ from modules.companies.infrastructure.persistence.models.company_model import Co
 from modules.companies.infrastructure.persistence.models.membership_model import MembershipModel
 from modules.drive.infrastructure.django_drive_service import DjangoDriveService
 from modules.drive.infrastructure.google_oauth_gateway import GoogleCredentials
-from modules.drive.infrastructure.persistence.models import DriveAccountModel
+from modules.drive.infrastructure.persistence.models import DriveAccountModel, DriveFolderModel
 from modules.identity.adapters.api.authenticated_principal import AuthenticatedPrincipal
 from modules.identity.infrastructure.cryptography.personal_data_protector import (
     PersonalDataProtector,
@@ -16,6 +16,8 @@ from modules.identity.infrastructure.cryptography.personal_data_protector import
 from modules.identity.infrastructure.persistence.models.user_projection_model import (
     UserProjectionModel,
 )
+from modules.projects.infrastructure.persistence.models.client_model import ClientModel
+from modules.projects.infrastructure.persistence.models.project_model import ProjectModel
 
 
 class FakeGateway:
@@ -27,6 +29,20 @@ class FakeGateway:
         return GoogleCredentials(
             "google-user", "owner@gmail.com", "raw-refresh-token", "drive.file"
         )
+
+    def refresh_access_token(self, refresh_token: str) -> str:
+        assert refresh_token == "raw-refresh-token"
+        return "temporary-access-token"
+
+
+class FakeDriveGateway:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str]] = []
+
+    def ensure_folder(self, access_token: str, name: str, parent_id: str = "") -> str:
+        assert access_token == "temporary-access-token"
+        self.calls.append((name, parent_id))
+        return f"folder-{len(self.calls)}"
 
 
 @override_settings(
@@ -114,3 +130,64 @@ class DriveOAuthTest(TestCase):
 
         assert client.post("/api/v1/drive/oauth/authorization").status_code == 403
         assert client.delete("/api/v1/drive/account").status_code == 403
+
+    @patch(
+        "modules.drive.adapters.api.views.create_google_drive_gateway",
+    )
+    @patch(
+        "modules.drive.adapters.api.views.create_google_oauth_gateway",
+        return_value=FakeGateway(),
+    )
+    def test_owner_prepares_idempotent_daily_folder_tree(self, _oauth, drive_factory) -> None:
+        self.client.post("/api/v1/drive/oauth/authorization")
+        service = DjangoDriveService(
+            PersonalDataProtector(
+                settings.PERSONAL_DATA_ENCRYPTION_KEYS,
+                settings.PERSONAL_DATA_HMAC_KEY,
+            )
+        )
+        state = service.create_state(self.company.id, self.user.id)
+        service.connect(service.consume_state(state), FakeGateway().exchange_code("google-code"))
+        client_record = ClientModel.objects.create(
+            company=self.company,
+            name="Cliente",
+            normalized_name="cliente",
+        )
+        project = ProjectModel.objects.create(
+            company=self.company,
+            client=client_record,
+            name="Campanha",
+            normalized_name="campanha",
+            created_by_user=self.user,
+        )
+        drive_gateway = FakeDriveGateway()
+        drive_factory.return_value = drive_gateway
+
+        first = self.client.post(
+            "/api/v1/drive/folders/ensure",
+            {"project_id": str(project.id), "date": "2026-08-25"},
+            format="json",
+        )
+        second = self.client.post(
+            "/api/v1/drive/folders/ensure",
+            {"project_id": str(project.id), "date": "2026-08-25"},
+            format="json",
+        )
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+        assert first.json()["path"] == (
+            "Gerenciador de Áudio Visual/Legado/Campanha/2026.08/25"
+        )
+        assert first.json() == second.json()
+        assert [name for name, _parent in drive_gateway.calls] == [
+            "Gerenciador de Áudio Visual",
+            "Legado",
+            "Campanha",
+            "2026.08",
+            "25",
+            "Originais",
+            "Previews",
+            "Entregas",
+        ]
+        assert DriveFolderModel.objects.count() == 8

@@ -30,9 +30,7 @@ class SafeFileDiscovery(FileDiscovery):
             for root, directories, files in os.walk(path, followlinks=False):
                 root_path = Path(root)
                 directories[:] = [
-                    name
-                    for name in directories
-                    if not self._is_technical(root_path / name)
+                    name for name in directories if not self._is_technical(root_path / name)
                 ]
                 for name in files:
                     candidate = root_path / name

@@ -53,9 +53,7 @@ class SQLiteOrganizationRepository(OrganizationRepository):
                 (status, str(operation_id)),
             )
 
-    def update_item(
-        self, item_id: UUID, status: str, error_message: str = ""
-    ) -> None:
+    def update_item(self, item_id: UUID, status: str, error_message: str = "") -> None:
         with self._database.connect() as connection:
             connection.execute(
                 """

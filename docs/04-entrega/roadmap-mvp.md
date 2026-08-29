@@ -1,6 +1,6 @@
 # Roadmap do MVP funcional
 
-**Estado:** EM IMPLEMENTAÇÃO. Atualizado em 25 de agosto de 2026.
+**Estado:** EM IMPLEMENTAÇÃO. Atualizado em 29 de agosto de 2026.
 
 **Início:** 3 de agosto de 2026.
 
@@ -180,32 +180,41 @@ O login real e o uso com dados reais ainda aguardam ensaio manual.
 
 ## Fase 6 — upload retomável ao Drive
 
-**Estado:** EM IMPLEMENTAÇÃO — FUNDAÇÃO OAUTH CONCLUÍDA EM 25 DE AGOSTO DE 2026.
+**Estado:** EM IMPLEMENTAÇÃO — TRANSPORTE REAL E PAINEL DE LOTES IMPLEMENTADOS.
 
 **Incremento implementado:** autorização e callback no backend, estado temporário de
 uso único, refresh token criptografado, isolamento por empresa, permissão de
 Proprietário, endpoints de estado/desconexão e painel correspondente no frontend.
 Credenciais reconhecidas pelo Google e conexão real concluída em 25 de agosto de
-2026. Estrutura de pastas, lotes e upload permanecem como a próxima fatia.
-
-O modelo atual representa somente a conta ativa. Antes dos lotes será necessário
-preservar contas anteriormente utilizadas e vincular cada lote à conta de destino.
+2026. Estrutura idempotente implementada e validada com o Drive real em 26 de agosto
+de 2026. Em 28 de agosto foram implementados histórico de contas, lotes vinculados à
+conta e às pastas, itens, tentativas, checkpoints e idempotência. A criação, consulta
+e renovação segura da sessão e o envio direto em blocos foram implementados. Em 29 de
+agosto, o transporte real foi retomado após 8 MiB e confirmado por ID, tamanho e
+SHA-256. O frontend passou a criar lotes por projeto, data, categoria e arquivos da
+mesma máquina, recuperar o lote após recarga e acompanhar progresso geral e individual.
 
 - contratos abstratos e adaptador local simulado para testes comuns;
-- modelos de conta, lote, item, tentativa e checkpoint;
+- modelos de conta, lote, item, tentativa e checkpoint — implementados;
 - conta e pasta isolada com escopo `drive.file`;
-- estrutura por cliente, projeto e data;
-- sessão retomável e checkpoint SQLite;
-- envio direto do agente;
+- estrutura `Empresa/Projeto/AAAA.MM/DD`, com `Originais`, `Previews` e `Entregas`;
+- sessão retomável no backend e checkpoint PostgreSQL — implementados;
+- envio direto do agente em blocos com checkpoint SQLite — implementado;
 - pausa, retomada e cancelamento;
 - confirmação de bytes, identificador, tamanho e integridade;
 - objeto do Drive e sincronização do catálogo;
 - tratamento de internet, dispositivo e limite de 5 TB;
 - frontend para conectar a conta Google sem expor credenciais — implementado;
-- criação e acompanhamento de lotes pelo frontend;
-- progresso geral e individual por arquivo, inicialmente por polling;
+- criação e acompanhamento de lotes pelo frontend — implementados;
+- progresso geral e individual por arquivo via polling — implementado;
 - pausa, retomada e cancelamento pelo frontend, aplicados no próximo bloco seguro;
 - estados e erros apresentados em linguagem simples e acionável.
+
+**Validação operacional de 29 de agosto de 2026:** a composição local foi reativada;
+backend e frontend foram recriados; PostgreSQL, Redis, processos Celery, Keycloak e
+Mailpit permaneceram operacionais. Interface, saúde, prontidão, descoberta OIDC e
+Mailpit responderam HTTP `200`. O upload retomável real, a suíte backend com 63 testes
+e o build do painel foram aprovados.
 
 **Aceite:** backend não transporta o binário, repetição não duplica upload,
 disponibilidade exige confirmação consistente e o usuário autorizado consegue conectar

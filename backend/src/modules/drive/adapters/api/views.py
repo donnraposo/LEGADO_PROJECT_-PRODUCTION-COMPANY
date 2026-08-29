@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.shortcuts import redirect
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +14,11 @@ from modules.companies.adapters.api.company_context import (
 )
 from modules.drive.adapters.api.dependencies import (
     create_drive_service,
+    create_google_drive_gateway,
     create_google_oauth_gateway,
+)
+from modules.drive.adapters.api.serializers.ensure_drive_folders_request_serializer import (
+    EnsureDriveFoldersRequestSerializer,
 )
 from modules.drive.application.exceptions import (
     GoogleOAuthExchangeError,
@@ -26,6 +30,11 @@ from modules.drive.application.exceptions import (
 class GoogleOAuthUnavailable(APIException):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     default_detail = "A conexão com o Google ainda não está configurada."
+
+
+class GoogleDriveUnavailable(APIException):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    default_detail = "Não foi possível preparar as pastas no Google Drive."
 
 
 class DriveAuthorizationView(APIView):
@@ -79,3 +88,25 @@ class DriveAccountView(APIView):
         membership = require_owner(request)
         create_drive_service().disconnect(membership.company_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DriveFolderTreeView(APIView):
+    def post(self, request) -> Response:
+        membership = require_owner(request)
+        serializer = EnsureDriveFoldersRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            result = create_drive_service().ensure_folder_tree(
+                membership.company_id,
+                serializer.validated_data["project_id"],
+                serializer.validated_data["date"],
+                create_google_oauth_gateway(),
+                create_google_drive_gateway(),
+            )
+        except GoogleOAuthNotConfiguredError as exc:
+            raise GoogleOAuthUnavailable() from exc
+        except GoogleOAuthExchangeError as exc:
+            raise GoogleDriveUnavailable() from exc
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+        return Response(result)

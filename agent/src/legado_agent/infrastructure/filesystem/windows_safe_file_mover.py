@@ -164,8 +164,10 @@ class WindowsSafeFileMover(FileMover):
 
     def _matches(self, path: Path, checksum_sha256: str, size_bytes: int) -> bool:
         try:
-            return path.is_file() and path.stat().st_size == size_bytes and (
-                self._checksum(path) == checksum_sha256
+            return (
+                path.is_file()
+                and path.stat().st_size == size_bytes
+                and (self._checksum(path) == checksum_sha256)
             )
         except OSError:
             return False

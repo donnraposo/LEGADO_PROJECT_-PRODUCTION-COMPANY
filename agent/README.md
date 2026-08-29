@@ -42,6 +42,25 @@ Certificados e chaves privadas nunca devem ser armazenados no projeto.
 - movimentação sem sobrescrita, inclusive entre volumes com verificação SHA-256;
 - checkpoints, interrupção e retomada sem repetir arquivos concluídos;
 - catálogo central idempotente sem envio de caminhos locais.
+- upload direto ao Drive em blocos de 8 MiB, com último bloco variável;
+- renovação de sessão expirada e checkpoints locais persistidos no SQLite;
+- comando `UPLOAD_FILE` sem transportar binário ou caminho pelo backend;
+- URL retomável mantida somente em memória.
+
+### Fluxo `UPLOAD_FILE`
+
+1. o agente recebe o item em `resource_id`;
+2. solicita ao backend sessão e metadados sem enviar caminho local;
+3. resolve o arquivo pelo `media_file_id` no SQLite;
+4. confirma tamanho e SHA-256;
+5. envia blocos de 8 MiB diretamente à URL do Drive;
+6. persiste cada avanço confirmado em `upload_jobs` e no backend;
+7. renova a sessão após `404/410` e retoma com uma nova tentativa;
+8. conclui o comando sem incluir URL ou caminho no resultado.
+
+Uma falha de comunicação marca o trabalho local como `INTERRUPTED`. O comando permanece
+retomável e, na próxima execução autenticada, o ponto devolvido pelo Drive prevalece
+sobre o checkpoint local.
 
 ## Configuração
 
@@ -56,7 +75,8 @@ LEGADO_POLL_INTERVAL=5
 LEGADO_WEB_URL=http://127.0.0.1:5173
 ```
 
-O SQLite nunca armazena senha, token OIDC ou credencial do Drive. Encerrar o agente descarta a sessão e o próximo início exige novo login.
+O SQLite nunca armazena senha, token OIDC, credencial ou URL retomável do Drive.
+Encerrar o agente descarta a sessão e o próximo início exige novo login.
 
 Os caminhos locais completos existem somente no SQLite do agente. A análise não altera
 arquivos. A organização somente começa após confirmação explícita, nunca substitui um

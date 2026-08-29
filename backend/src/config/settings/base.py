@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "modules.catalog.apps.CatalogConfig",
     "modules.operations.apps.OperationsConfig",
     "modules.drive.apps.DriveConfig",
+    "modules.uploads.apps.UploadsConfig",
 ]
 
 MIDDLEWARE = [

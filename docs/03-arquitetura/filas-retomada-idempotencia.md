@@ -114,7 +114,7 @@ SQLite manterá:
 
 - tarefas pendentes;
 
-- sessões de upload;
+- trabalhos de upload e identificadores de tentativa, nunca a URL da sessão;
 
 - último estado conhecido;
 
@@ -130,6 +130,11 @@ SQLite manterá:
 
 Após reinício do computador, a fila será preservada, mas permanecerá bloqueada até nova autenticação.
 
+O schema SQLite v4 usa `upload_jobs` com uma linha idempotente por `item_id`. São
+persistidos caminho local, versão lógica associada, tentativa, tamanho, SHA-256,
+checkpoint, estado e erro resumido. Credenciais OAuth, access token, refresh token e
+URL retomável são proibidos no banco local.
+
 
 
 #### Progresso e checkpoints
@@ -138,13 +143,28 @@ Após reinício do computador, a fila será preservada, mas permanecerá bloquea
 
 - agente poderá transmitir progresso transitório em intervalo de aproximadamente dois segundos;
 
-- frontend receberá atualizações por Channels;
+- frontend consulta lotes ativos a cada dois segundos; Channels permanece planejado
+  como aviso, com polling como fallback;
 
 - PostgreSQL persistirá checkpoints periódicos, mudanças de estado e marcos relevantes de volume;
 
 - antes de retomar, agente consultará o ponto confirmado pelo Drive;
 
 - progresso informado pelo agente não substituirá a confirmação do Drive.
+
+Pausa, retomada e cancelamento são mutações centrais versionadas e idempotentes. O
+agente consulta o estado antes de cada bloco e confirma a aplicação no mesmo recurso.
+Enquanto o controle permanecer `PAUSED`, nenhuma nova transmissão será iniciada. Toda
+atualização rejeita `confirmed_bytes` inferior ao checkpoint já persistido.
+
+O painel restaura o último `batch_id` da empresa após recarga, mas sempre consulta o
+backend como fonte de verdade. O polling termina nos estados finais e o percentual é
+derivado de `confirmed_bytes / total_bytes`, sem regressão local.
+
+No transporte atual, cada resposta `308` do Drive produz checkpoint local e central.
+Depois de reiniciar, o agente solicita novamente a sessão ao backend; o backend consulta
+o Drive e devolve o ponto confirmado. O arquivo é reposicionado nesse byte antes do
+próximo bloco, sem confiar apenas no valor SQLite.
 
 
 

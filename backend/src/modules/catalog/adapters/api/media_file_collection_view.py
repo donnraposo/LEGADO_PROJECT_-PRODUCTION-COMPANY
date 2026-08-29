@@ -104,6 +104,8 @@ class MediaFileCollectionView(APIView):
             "description": item.description,
             "observations": item.observations,
             "size_bytes": item.size_bytes,
+            "file_version_id": str(item.file_version_id),
+            "source_machine_id": str(item.source_machine_id) if item.source_machine_id else None,
             "checksum": {
                 "algorithm": item.checksum_algorithm,
                 "digest": item.checksum_digest,

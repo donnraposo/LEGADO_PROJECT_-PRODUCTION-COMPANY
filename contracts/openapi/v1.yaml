@@ -8,6 +8,215 @@ servers:
 security:
   - keycloak: []
 paths:
+  /api/v1/upload-batches:
+    get:
+      operationId: listUploadBatches
+      summary: Lista lotes acessíveis da empresa
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Lotes de upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadBatchCollection"
+    post:
+      operationId: createUploadBatch
+      summary: Cria um lote idempotente vinculado à conta e às pastas do Drive
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUploadBatchRequest"
+      responses:
+        "201":
+          description: Lote criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadBatchDetail"
+        "200":
+          description: Repetição idempotente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadBatchDetail"
+        "409":
+          description: Chave reutilizada com dados diferentes ou arquivo em lote ativo
+  /api/v1/upload-batches/{batch_id}:
+    get:
+      operationId: getUploadBatch
+      summary: Consulta lote e itens acessíveis
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: batch_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Lote de upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadBatchDetail"
+  /api/v1/upload-batches/{batch_id}/control:
+    post:
+      operationId: controlUploadBatch
+      summary: Solicita pausa, retomada ou cancelamento idempotente do lote
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: batch_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UploadControlRequest"}
+      responses:
+        "200":
+          description: Controle solicitado ou reutilizado
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/UploadBatchDetail"}
+  /api/v1/upload-items/{item_id}/attempts:
+    post:
+      operationId: createUploadAttempt
+      summary: Cria ou reutiliza a tentativa ativa do item
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: item_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "201":
+          description: Tentativa disponível
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadAttempt"
+  /api/v1/upload-attempts/{attempt_id}/checkpoint:
+    put:
+      operationId: recordUploadCheckpoint
+      summary: Registra checkpoint monotônico confirmado pelo Drive
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: attempt_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [confirmed_bytes]
+              properties:
+                confirmed_bytes: {type: integer, minimum: 0}
+      responses:
+        "200":
+          description: Checkpoint persistido ou reutilizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadCheckpoint"
+        "409":
+          description: Checkpoint regressivo
+  /api/v1/agent/upload-items/{item_id}/session:
+    post:
+      operationId: ensureAgentUploadSession
+      summary: Cria, reutiliza ou renova a sessão retomável destinada ao agente
+      description: A URL sensível é entregue somente neste contrato do agente e nunca integra respostas web comuns.
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: item_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnsureUploadSessionRequest"
+      responses:
+        "201":
+          description: Nova sessão criada ou renovada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentUploadSession"
+        "200":
+          description: Sessão ativa reutilizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentUploadSession"
+        "502":
+          description: Google Drive indisponível sem invalidar prematuramente a sessão
+  /api/v1/agent/upload-attempts/{attempt_id}/complete:
+    post:
+      operationId: confirmAgentUploadObject
+      summary: Confirma pela API do Drive o objeto enviado pelo agente
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: attempt_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteUploadRequest"
+      responses:
+        "201":
+          description: Objeto confirmado e persistido
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DriveObject"}
+        "200":
+          description: Confirmação idempotente reutilizada
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DriveObject"}
+  /api/v1/drive/folders/ensure:
+    post:
+      operationId: ensureDriveFolderTree
+      summary: Cria ou reutiliza a árvore diária de pastas do projeto no Drive
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnsureDriveFoldersRequest"
+      responses:
+        "200":
+          description: Árvore de pastas disponível
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriveFolderTree"
+        "400":
+          description: Conta desconectada, projeto inválido ou dados inválidos
+        "403":
+          description: Operação restrita ao Proprietário
+        "502":
+          description: Falha na comunicação com o Google Drive
+        "503":
+          description: Credenciais OAuth ainda não configuradas
   /api/v1/drive/account:
     get:
       operationId: getDriveAccount
@@ -695,6 +904,178 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    UploadControlRequest:
+      type: object
+      additionalProperties: false
+      required: [action, expected_version, idempotency_key]
+      properties:
+        action: {type: string, enum: [PAUSE, RESUME, CANCEL]}
+        expected_version: {type: integer, minimum: 1}
+        idempotency_key: {type: string, minLength: 8, maxLength: 120}
+    CreateUploadBatchRequest:
+      type: object
+      additionalProperties: false
+      required: [project_id, machine_id, folder_date, idempotency_key, items]
+      properties:
+        project_id: {type: string, format: uuid}
+        machine_id: {type: string, format: uuid}
+        folder_date: {type: string, format: date}
+        idempotency_key: {type: string, minLength: 8, maxLength: 120}
+        items:
+          type: array
+          minItems: 1
+          maxItems: 10000
+          items:
+            type: object
+            additionalProperties: false
+            required: [file_version_id, destination_category, final_name]
+            properties:
+              file_version_id: {type: string, format: uuid}
+              destination_category:
+                type: string
+                enum: [ORIGINAIS, PREVIEWS, ENTREGAS]
+              final_name: {type: string, minLength: 1, maxLength: 255}
+    UploadBatch:
+      type: object
+      additionalProperties: false
+      required: [id, project_id, machine_id, drive_account_id, folder_date, status, total_items, total_bytes, confirmed_bytes, progress_percent, version, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        project_id: {type: string, format: uuid}
+        machine_id: {type: string, format: uuid}
+        drive_account_id: {type: string, format: uuid}
+        folder_date: {type: string, format: date}
+        status: {type: string}
+        total_items: {type: integer, minimum: 1, maximum: 10000}
+        total_bytes: {type: integer, minimum: 0}
+        confirmed_bytes: {type: integer, minimum: 0}
+        progress_percent: {type: integer, minimum: 0, maximum: 100}
+        version: {type: integer, minimum: 1}
+        created_at: {type: string, format: date-time}
+    UploadBatchDetail:
+      allOf:
+        - $ref: "#/components/schemas/UploadBatch"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/UploadItem"
+    UploadBatchCollection:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadBatch"
+        next_cursor: {type: [string, "null"]}
+    UploadItem:
+      type: object
+      additionalProperties: false
+      required: [id, file_version_id, destination_folder_id, destination_category, final_name, size_bytes, confirmed_bytes, progress_percent, status, position, version]
+      properties:
+        id: {type: string, format: uuid}
+        file_version_id: {type: string, format: uuid}
+        destination_folder_id: {type: string, format: uuid}
+        destination_category: {type: string, enum: [ORIGINAIS, PREVIEWS, ENTREGAS]}
+        final_name: {type: string}
+        size_bytes: {type: integer, minimum: 0}
+        confirmed_bytes: {type: integer, minimum: 0}
+        progress_percent: {type: integer, minimum: 0, maximum: 100}
+        status: {type: string}
+        position: {type: integer, minimum: 1}
+        version: {type: integer, minimum: 1}
+    UploadAttempt:
+      type: object
+      additionalProperties: false
+      required: [id, item_id, sequence, status]
+      properties:
+        id: {type: string, format: uuid}
+        item_id: {type: string, format: uuid}
+        sequence: {type: integer, minimum: 1}
+        status: {type: string}
+    UploadCheckpoint:
+      type: object
+      additionalProperties: false
+      required: [id, attempt_id, sequence, confirmed_bytes, source]
+      properties:
+        id: {type: string, format: uuid}
+        attempt_id: {type: string, format: uuid}
+        sequence: {type: integer, minimum: 1}
+        confirmed_bytes: {type: integer, minimum: 0}
+        source: {type: string, enum: [DRIVE]}
+    EnsureUploadSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [machine_id]
+      properties:
+        machine_id: {type: string, format: uuid}
+    AgentUploadSession:
+      type: object
+      additionalProperties: false
+      required: [attempt_id, item_id, sequence, status, session_url, confirmed_bytes, media_file_id, size_bytes, checksum_algorithm, checksum_digest]
+      properties:
+        attempt_id: {type: string, format: uuid}
+        item_id: {type: string, format: uuid}
+        sequence: {type: integer, minimum: 1}
+        status: {type: string, enum: [ACTIVE]}
+        session_url: {type: string, format: uri, writeOnly: true}
+        confirmed_bytes: {type: integer, minimum: 0}
+        media_file_id: {type: string, format: uuid}
+        size_bytes: {type: integer, minimum: 0}
+        checksum_algorithm: {type: string}
+        checksum_digest: {type: string}
+    CompleteUploadRequest:
+      type: object
+      additionalProperties: false
+      required: [machine_id, provider_object_id]
+      properties:
+        machine_id: {type: string, format: uuid}
+        provider_object_id: {type: string}
+    DriveObject:
+      type: object
+      additionalProperties: false
+      required: [id, upload_item_id, provider_object_id, name, size_bytes, checksum_sha256, status]
+      properties:
+        id: {type: string, format: uuid}
+        upload_item_id: {type: string, format: uuid}
+        provider_object_id: {type: string}
+        name: {type: string}
+        size_bytes: {type: integer, minimum: 0}
+        checksum_sha256: {type: string}
+        status: {type: string, enum: [CONFIRMED]}
+    EnsureDriveFoldersRequest:
+      type: object
+      additionalProperties: false
+      required: [project_id, date]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+    DriveFolderTree:
+      type: object
+      additionalProperties: false
+      required: [path, folders]
+      properties:
+        path:
+          type: string
+          example: Gerenciador de Áudio Visual/Empresa/Projeto/2026.08/25
+        folders:
+          type: object
+          additionalProperties: false
+          required: [originais, previews, entregas]
+          properties:
+            originais:
+              type: string
+            previews:
+              type: string
+            entregas:
+              type: string
     DriveAccount:
       type: object
       additionalProperties: false
@@ -811,6 +1192,8 @@ components:
         - description
         - observations
         - size_bytes
+        - file_version_id
+        - source_machine_id
         - checksum
         - recorded_at
         - status
@@ -836,6 +1219,12 @@ components:
         size_bytes:
           type: integer
           minimum: 0
+        file_version_id:
+          type: string
+          format: uuid
+        source_machine_id:
+          type: [string, "null"]
+          format: uuid
         checksum:
           type: object
           additionalProperties: false

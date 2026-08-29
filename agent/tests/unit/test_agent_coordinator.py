@@ -14,6 +14,23 @@ class FakeBackend(BackendGateway):
         self.commands = [command]
         self.transitions: list[str] = []
 
+    def ensure_upload_session(self, company_id, machine_id, item_id):
+        raise NotImplementedError
+
+    def upload_control(self, company_id, machine_id, item_id):
+        return "UPLOADING"
+
+    def report_upload_state(
+        self, company_id, machine_id, item_id, status, confirmed_bytes, failure_code=""
+    ):
+        return None
+
+    def record_upload_checkpoint(self, company_id, attempt_id, confirmed_bytes):
+        raise NotImplementedError
+
+    def confirm_upload_object(self, company_id, machine_id, attempt_id, provider_object_id):
+        raise NotImplementedError
+
     def ingest_media_file(
         self,
         company_id,

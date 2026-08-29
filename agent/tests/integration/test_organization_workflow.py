@@ -95,9 +95,7 @@ def test_verified_copy_path_preserves_content(tmp_path) -> None:
     checksum = StreamingSha256(chunk_size=3).calculate(source)
     mover = WindowsSafeFileMover(chunk_size=3)
 
-    status = mover._copy_across_volumes(
-        source, destination, checksum, len(content), uuid4()
-    )
+    status = mover._copy_across_volumes(source, destination, checksum, len(content), uuid4())
 
     assert status == "MOVED"
     assert not source.exists()
@@ -108,9 +106,7 @@ def test_cross_volume_copy_never_removes_preexisting_partial_file(tmp_path) -> N
     source = tmp_path / "source.mov"
     destination = tmp_path / "destination.mov"
     transfer_id = uuid4()
-    partial = destination.with_name(
-        f".{destination.name}.{transfer_id}.legado-partial"
-    )
+    partial = destination.with_name(f".{destination.name}.{transfer_id}.legado-partial")
     source.write_bytes(b"new-content")
     partial.write_bytes(b"must-remain")
     checksum = StreamingSha256().calculate(source)
@@ -133,9 +129,7 @@ def test_moved_file_is_cataloged_and_checkpointed(tmp_path) -> None:
     media_file_id = uuid4()
     backend = _CatalogBackend(media_file_id)
 
-    status = ExecuteOrganizationUseCase(
-        repository, mover, backend, uuid4()
-    ).execute(operation)
+    status = ExecuteOrganizationUseCase(repository, mover, backend, uuid4()).execute(operation)
 
     checkpoint = repository.list_items(operation.id)[0]
     assert status == "COMPLETED"

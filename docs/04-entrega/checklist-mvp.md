@@ -13,6 +13,8 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 - [x] reconstruir backend e workers com a imagem do código atual;
 - [x] verificar saúde depois da reconstrução;
 - [x] baseline documentada.
+- [x] composição completa revalidada em 29 de agosto de 2026 com interface, API,
+  prontidão, OIDC e Mailpit respondendo HTTP `200`.
 
 ## Fase 1 — catálogo
 
@@ -62,22 +64,28 @@ Este checklist acompanha [Roadmap do MVP funcional](roadmap-mvp.md). Um item som
 
 ## Fase 6 — Drive
 
-- [ ] contratos de armazenamento e adaptador local simulado;
-- [ ] modelos de conta, lote, item, tentativa e checkpoint;
+- [x] contratos de armazenamento e adaptador local simulado;
+- [x] histórico de conta e modelos de lote, item, tentativa e checkpoint;
 - [x] OAuth `drive.file` validado com conta real de teste;
-- [ ] pasta raiz isolada e árvore idempotente;
+- [x] pasta raiz isolada e árvore idempotente `Empresa/Projeto/AAAA.MM/DD/categoria`;
 - [x] estado OAuth temporário, uso único e callback exclusivo do backend;
 - [x] refresh token criptografado e isolado por empresa;
-- [ ] sessão retomável e checkpoint;
-- [ ] upload direto agente–Drive;
-- [ ] pausa, retomada e cancelamento;
-- [ ] integridade e objeto do Drive confirmados;
-- [ ] catálogo sincronizado sem duplicação;
+- [x] persistência e monotonicidade de checkpoint no backend;
+- [x] criação, consulta e renovação segura da sessão retomável no backend;
+- [x] ensaio da sessão retomável no Google Drive real;
+- [x] upload direto agente–Drive em blocos com checkpoint SQLite;
+- [x] renovação automática após expiração da sessão;
+- [x] URL retomável ausente do SQLite e dos resultados de comando;
+- [x] tamanho e SHA-256 verificados antes do transporte;
+- [x] pausa, retomada e cancelamento no próximo bloco seguro;
+- [x] confirmação central idempotente de integridade e objeto implementada;
+- [x] catálogo sincronizado somente após validação central;
+- [x] confirmação ensaiada contra objeto real do Drive;
 - [x] frontend inicia e acompanha a conexão sem receber credenciais persistentes;
-- [ ] frontend cria lote e acompanha progresso geral e por arquivo;
-- [ ] frontend oferece pausa, retomada e cancelamento;
-- [ ] recarregar a página recupera o estado central do lote;
-- [ ] erros de autenticação, internet, disco, cota e integridade são acionáveis;
+- [x] frontend cria lote e acompanha progresso geral e por arquivo;
+- [x] frontend oferece pausa, retomada e cancelamento;
+- [x] recarregar a página recupera o estado central do lote;
+- [x] erros de autenticação, internet, disco, cota e integridade são acionáveis;
 - [x] frontend nunca expõe refresh token ou URL retomável.
 - [x] ensaio OAuth real com credenciais e conta Google de teste.
 
