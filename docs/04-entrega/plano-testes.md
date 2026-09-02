@@ -2,6 +2,25 @@
 
 > A ordem de validação da primeira entrega é acompanhada no [Checklist do MVP](checklist-mvp.md).
 
+**Fechamento técnico em 31 de agosto de 2026:** 66 testes backend, 37 testes do
+agente e 21 testes frontend aprovados; build web e TypeScript aprovados. Cobertos
+ingresso WebSocket de uso único, rejeição de ingresso inválido, revogação de canal
+aberto após bloqueio da associação, checkpoints
+monotônicos e reconciliação Drive → PostgreSQL → SQLite. Ruff aprovado no escopo
+alterado; a verificação global mantém duas pendências antigas de formatação nos
+arquivos de exportação de modelos do módulo Drive. Backup e restauração ainda exigem
+ensaio operacional em ambiente parado.
+
+**Organização automática em 31 de agosto de 2026:** suíte do agente ampliada para 39
+testes. Migração SQLite v5, persistência da pasta-base, reabertura sem nova seleção,
+texto `LOGIN`, ausência do botão de destino e preservação dos fluxos existentes foram
+validados. Ruff aprovado no agente.
+
+**Seleção de mídia e destino por análise em 31 de agosto de 2026:** suíte do agente
+ampliada para 41 testes. Botão `Selecionar HD`, confirmação do destino em cada análise,
+sugestão do último local e bloqueio de destino recursivo foram validados. Ruff aprovado
+em todo o agente.
+
 **Baseline de 3 de agosto de 2026:** 42 testes aprovados, Ruff aprovado, migrations consistentes e OpenAPI sem erros.
 
 **Baseline de 18 de agosto de 2026:** imagens reconstruídas; serviços centrais e Celery Beat operacionais; saúde `live` e `ready` aprovada; 42 testes aprovados; Ruff e migrations aprovados; OpenAPI válido com 19 avisos documentais não bloqueadores.
@@ -47,7 +66,8 @@ pendente o ensaio visível com uma conta de e-mail verificado.
 ampliada para 31 testes. Uma criação real de empresa retornou HTTP `201`, mas revelou
 que a referência local da tarefa podia ser descartada antes de a interface consumir o
 sinal. A janela agora retém tarefas até `finished`; o registro da máquina ocorre após
-carregar a empresa e `Tentar novamente` é exibido somente após falha. Testes cobrem
+carregar a empresa e, naquele incremento, `Tentar novamente` era exibido após falha.
+Esse controle manual foi removido pela decisão 0.40. Testes cobrem
 entrega assíncrona, liberação da tarefa, heartbeat automático e recuperação visual.
 Ruff permaneceu aprovado. A revalidação visual do código corrigido está pendente.
 
@@ -229,8 +249,9 @@ Os testes deverão cobrir, no mínimo, regras de domínio, isolamento entre empr
 - agente cria empresa, cliente e múltiplos projetos usando somente a API central;
 - troca de cliente filtra os projetos disponíveis para impedir contexto incoerente;
 - tarefa de fundo permanece viva até a interface receber sucesso ou falha;
-- seleção de empresa registra a máquina e inicia heartbeat sem ação manual;
-- falha de registro exibe `Tentar novamente` sem manter fila ou timer ativos;
+- login e seleção de empresa iniciam silenciosamente a identificação técnica e o heartbeat;
+- falha transitória é repetida automaticamente, sem botão de conexão da máquina;
+- remoção ou bloqueio do usuário impede operações em todas as instalações associadas;
 - cliente web mantém token e empresa somente nos cabeçalhos HTTP;
 - cliente web converte falhas da API em mensagem segura;
 - formatação de tamanhos, tipos, build Vite e inicialização Docker foram validados;

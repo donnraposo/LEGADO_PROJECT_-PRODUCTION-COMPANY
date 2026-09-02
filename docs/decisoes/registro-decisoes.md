@@ -151,6 +151,58 @@ Ao retomar este projeto:
 As entradas abaixo registram o estado existente na data de cada decisão. Para o
 estado atual, prevalecem a entrada mais recente e os documentos de entrega.
 
+### 31 de agosto de 2026 — versão 0.45
+
+- incluído o botão `Selecionar HD` para análise de uma mídia inteira;
+- cada nova análise exige a escolha explícita da mídia ou pasta de destino;
+- último destino mantido somente como sugestão, sem reutilização silenciosa;
+- destino dentro da origem bloqueado para impedir processamento recursivo;
+- suíte do agente ampliada para 41 testes, com Ruff aprovado.
+
+### 31 de agosto de 2026 — versão 0.44
+
+- botão `Entrar` renomeado para `LOGIN` no agente;
+- removida a seleção de destino do fluxo operacional diário;
+- pasta-base configurada uma vez, persistida localmente e alterável pelo menu de configurações;
+- estrutura `Cliente/Projeto/Ano/Mês/Dia` criada automaticamente após a confirmação;
+- prévia do destino permanece obrigatória e nenhuma sobrescrita foi autorizada;
+- SQLite evoluído para v5 e suíte do agente ampliada para 39 testes.
+
+### 31 de agosto de 2026 — versão 0.43
+
+- bloqueio de associação durante canal aberto passa a encerrar o WebSocket no próximo evento;
+- documentação corrente consolidada com 66 testes backend, 37 do agente e 21 do frontend;
+- Fase 6 passa a implementada, aguardando ensaios reais de falha;
+- Fase 8 concentra E2E visual, ensaio de backup/restauração, instalador e publicação;
+- release permanece candidata local e não publicada.
+
+### 30 de agosto de 2026 — versão 0.42
+
+- aprovado WebSocket apenas como aviso, mantendo a API como fonte de verdade e polling
+  automático como contingência;
+- ingresso do canal definido como efêmero, de uso único e vinculado à associação ativa,
+  sem expor token OIDC na URL;
+- reconciliação de upload definida pelo checkpoint remoto do Drive, persistido no
+  PostgreSQL e aplicado ao SQLite antes do próximo bloco;
+- backup exige manifesto SHA-256 e restauração exige confirmação literal;
+- publicação externa da release permanece dependente de autorização específica.
+
+### 30 de agosto de 2026 — versão 0.41
+
+- status internos de upload permanecem em inglês nos contratos, banco e agente;
+- painel traduz os estados para português por um mapeamento centralizado;
+- valores desconhecidos não expõem códigos técnicos ao usuário.
+
+### 29 de agosto de 2026 — versão 0.40
+
+- login do usuário definido como única ação necessária para operar o agente;
+- removida a conexão, aprovação e liberação manual de máquinas;
+- UUID da instalação e heartbeat permanecem apenas como mecanismos técnicos de origem,
+  roteamento, retomada e idempotência;
+- autorização permanece vinculada ao usuário, à empresa e aos projetos vigentes;
+- remoção ou bloqueio do usuário interrompe o acesso de todas as instalações associadas;
+- falhas transitórias da sessão técnica passam a ter repetição automática e invisível.
+
 ### 29 de agosto de 2026 — versão 0.39
 
 - concluídos controles operacionais de pausa, retomada e cancelamento no próximo bloco seguro;

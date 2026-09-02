@@ -1,0 +1,21 @@
+const uploadStatusLabels: Readonly<Record<string, string>> = {
+  CREATED: "CRIADO",
+  PENDING: "PENDENTE",
+  READY: "PRONTO",
+  RUNNING: "EM ANDAMENTO",
+  UPLOADING: "ENVIANDO",
+  PAUSE_REQUESTED: "PAUSA SOLICITADA",
+  PAUSED: "PAUSADO",
+  CANCEL_REQUESTED: "CANCELAMENTO SOLICITADO",
+  VERIFYING: "VERIFICANDO",
+  INTERRUPTED: "INTERROMPIDO",
+  SUCCEEDED: "CONCLUÍDO",
+  FAILED: "FALHOU",
+  CANCELLED: "CANCELADO",
+  ACTIVE: "ATIVO",
+  EXPIRED: "EXPIRADO",
+};
+
+export function formatUploadStatus(status: string): string {
+  return uploadStatusLabels[status] ?? "STATUS DESCONHECIDO";
+}

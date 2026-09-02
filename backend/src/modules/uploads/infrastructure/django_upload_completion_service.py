@@ -9,6 +9,7 @@ from modules.projects.infrastructure.persistence.models.project_access_model imp
     ProjectAccessModel,
 )
 from modules.uploads.infrastructure.persistence.models import UploadAttemptModel, UploadBatchModel
+from modules.uploads.infrastructure.upload_events import publish_upload_change
 
 
 class DjangoUploadCompletionService:
@@ -90,6 +91,7 @@ class DjangoUploadCompletionService:
         item.file_version.media_file.save(update_fields=["status", "updated_at"])
         if not item.batch.items.exclude(status="SUCCEEDED").exists():
             UploadBatchModel.objects.filter(id=item.batch_id).update(status="SUCCEEDED")
+        publish_upload_change(company_id, item.batch_id)
         return self._response(obj), True
 
     @staticmethod

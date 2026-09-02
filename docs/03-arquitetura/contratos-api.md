@@ -46,7 +46,8 @@ Padrões REST, operações assíncronas, erros, paginação e evolução.
 
 - downloads e lixeira: solicitações, itens, envio e restauração;
 
-- agente: máquinas, presença, comandos, confirmações e progresso;
+- agente: sessão autenticada, identificação técnica da instalação, comandos,
+  confirmações e progresso;
 
 - integrações internas: namespace `/api/internal/v1`;
 
@@ -82,6 +83,7 @@ fazem parte das respostas.
 
 - listar e criar lote: `GET|POST /api/v1/upload-batches`;
 - consultar lote com itens: `GET /api/v1/upload-batches/{batch_id}`;
+- emitir ingresso efêmero para tempo real: `POST /api/v1/upload-realtime/ticket`;
 - solicitar pausa, retomada ou cancelamento:
   `POST /api/v1/upload-batches/{batch_id}/control`;
 - criar ou reutilizar tentativa: `POST /api/v1/upload-items/{item_id}/attempts`;
@@ -95,6 +97,12 @@ A criação exige chave de idempotência. Repetição com o mesmo conteúdo reut
 a mesma chave com conteúdo diferente retorna conflito. Os contratos não expõem tokens
 nem referências de sessão retomável. A URL temporária aparece somente na resposta do
 endpoint do agente, após validar a máquina vinculada ao lote.
+
+O heartbeat não representa conexão, aprovação ou autorização manual da máquina. Após
+o login, o agente registra silenciosamente a instalação no contexto empresarial para
+rotear arquivos, comandos e retomadas. A autorização deriva sempre do usuário
+autenticado e de seus vínculos vigentes; remover ou bloquear o usuário invalida as
+operações de todas as instalações usadas por ele.
 
 O controle recebe `action`, `expected_version` e `idempotency_key`. A repetição da
 mesma ação com a mesma chave devolve o estado já persistido; reutilizar a chave para
@@ -119,6 +127,10 @@ contém somente `upload_item_id` e `confirmed_bytes`; URL e caminho são proibid
 
 A confirmação recebe máquina e ID externo, consulta o Drive com a credencial central e
 retorna `201` na primeira persistência ou `200` na repetição idempotente.
+
+O WebSocket usa `WS /ws/uploads/{ticket}`. O ingresso expira em 60 segundos, é usado
+uma única vez e é vinculado à associação ativa que o emitiu. O canal transmite apenas
+o tipo do evento e o identificador do lote; o frontend busca o estado oficial pela API.
 
 
 

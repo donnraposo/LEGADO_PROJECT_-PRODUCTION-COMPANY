@@ -123,6 +123,13 @@ class SQLiteDatabase:
         );
         CREATE INDEX ix_upload_jobs_status ON upload_jobs(status, updated_at);
         """,
+        """
+        CREATE TABLE agent_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        """,
     )
 
     def __init__(self, path: Path) -> None:

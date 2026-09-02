@@ -9,6 +9,7 @@ from modules.uploads.adapters.api.views import (
     UploadBatchControlView,
     UploadBatchDetailView,
     UploadCheckpointView,
+    UploadRealtimeTicketView,
 )
 
 urlpatterns = [
@@ -28,6 +29,7 @@ urlpatterns = [
         name="agent-upload-session",
     ),
     path("upload-batches", UploadBatchCollectionView.as_view(), name="upload-batches"),
+    path("upload-realtime/ticket", UploadRealtimeTicketView.as_view(), name="upload-ticket"),
     path("upload-batches/<uuid:batch_id>", UploadBatchDetailView.as_view(), name="upload-batch"),
     path(
         "upload-batches/<uuid:batch_id>/control",

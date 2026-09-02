@@ -7,8 +7,9 @@ agosto de 2026. Estrutura idempotente de pastas implementada e validada no Drive
 em 26 de agosto de 2026. Histórico de contas, lotes, itens, tentativas e checkpoints
 foram implementados em 28 de agosto. A criação, consulta e renovação segura da sessão
 retomável e o envio direto em blocos pelo agente também estão implementados. O ensaio
-real e os controles operacionais permanecem pendentes. A confirmação central do objeto
-foi implementada e validada com gateway simulado.
+real, a interrupção, a retomada, a confirmação central do objeto e os controles
+operacionais foram validados. Permanecem pendentes os ensaios reais de falhas de cota,
+autenticação e indisponibilidade do disco.
 
 Propriedade, OAuth, upload retomável, custos e limites do ambiente de testes.
 

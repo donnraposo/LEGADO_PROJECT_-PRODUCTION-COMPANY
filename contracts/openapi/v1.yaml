@@ -8,6 +8,19 @@ servers:
 security:
   - keycloak: []
 paths:
+  /api/v1/upload-realtime/ticket:
+    post:
+      operationId: createUploadRealtimeTicket
+      summary: Emite ingresso efêmero e de uso único para o canal de uploads
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "201":
+          description: Ingresso criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadRealtimeTicket"
   /api/v1/upload-batches:
     get:
       operationId: listUploadBatches
@@ -521,6 +534,57 @@ paths:
                 $ref: "#/components/schemas/MediaFile"
         "409":
           description: Versão desatualizada
+  /api/v1/media-files/{media_file_id}/playback:
+    post:
+      operationId: createMediaPlaybackSession
+      summary: Emite reprodução temporária e link de fallback do Google Drive
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - name: media_file_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "201":
+          description: Sessão temporária de reprodução criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaPlaybackSession"
+        "404": {description: Arquivo ausente ou não autorizado}
+  /api/v1/media-playback/{ticket}:
+    get:
+      operationId: streamMediaPlayback
+      summary: Transmite partes do vídeo usando um ticket opaco e temporário
+      security: []
+      parameters:
+        - name: ticket
+          in: path
+          required: true
+          schema: {type: string, minLength: 40}
+        - name: Range
+          in: header
+          required: false
+          schema: {type: string}
+      responses:
+        "200": {description: Conteúdo completo do arquivo}
+        "206": {description: Parte solicitada do arquivo}
+        "404": {description: Ticket expirado ou arquivo indisponível}
+        "502": {description: Google Drive temporariamente indisponível}
+  /api/v1/media-download/{ticket}:
+    get:
+      operationId: downloadMediaFile
+      summary: Baixa o arquivo usando um ticket opaco e temporário
+      security: []
+      parameters:
+        - name: ticket
+          in: path
+          required: true
+          schema: {type: string, minLength: 40}
+      responses:
+        "200": {description: Arquivo transmitido como anexo}
+        "404": {description: Ticket expirado ou arquivo indisponível}
+        "502": {description: Google Drive temporariamente indisponível}
   /api/v1/media-files/{media_file_id}/metadata-history:
     get:
       operationId: listMediaMetadataHistory
@@ -904,6 +968,13 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    UploadRealtimeTicket:
+      type: object
+      additionalProperties: false
+      required: [ticket, expires_in]
+      properties:
+        ticket: {type: string, minLength: 40}
+        expires_in: {type: integer, minimum: 1, maximum: 60}
     UploadControlRequest:
       type: object
       additionalProperties: false
@@ -1180,6 +1251,21 @@ components:
         recorded_at:
           type: [string, "null"]
           format: date-time
+    MediaPlaybackSession:
+      type: object
+      additionalProperties: false
+      required: [stream_url, download_url, drive_url, expires_in]
+      properties:
+        stream_url:
+          type: string
+        download_url:
+          type: string
+        drive_url:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+          minimum: 1
     MediaFile:
       type: object
       additionalProperties: false

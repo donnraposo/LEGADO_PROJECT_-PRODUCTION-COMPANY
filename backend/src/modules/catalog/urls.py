@@ -9,6 +9,11 @@ from modules.catalog.adapters.api.media_file_reconciliation_view import (
     MediaFileReconciliationView,
 )
 from modules.catalog.adapters.api.media_file_tag_view import MediaFileTagView
+from modules.catalog.adapters.api.media_playback_view import (
+    MediaDownloadStreamView,
+    MediaPlaybackStreamView,
+    MediaPlaybackTicketView,
+)
 from modules.catalog.adapters.api.metadata_history_view import (
     MetadataHistoryView,
     RestoreMetadataView,
@@ -27,6 +32,21 @@ urlpatterns = [
         "media-files/<uuid:media_file_id>",
         MediaFileDetailView.as_view(),
         name="media-file-detail",
+    ),
+    path(
+        "media-files/<uuid:media_file_id>/playback",
+        MediaPlaybackTicketView.as_view(),
+        name="media-playback-ticket",
+    ),
+    path(
+        "media-playback/<str:ticket>",
+        MediaPlaybackStreamView.as_view(),
+        name="media-playback-stream",
+    ),
+    path(
+        "media-download/<str:ticket>",
+        MediaDownloadStreamView.as_view(),
+        name="media-download-stream",
     ),
     path("tags", TagCollectionView.as_view(), name="tag-collection"),
     path("tags/<uuid:tag_id>", TagDetailView.as_view(), name="tag-detail"),

@@ -1,7 +1,14 @@
-from django.test import TestCase
+from io import BytesIO
+from unittest.mock import Mock, call, patch
+
+from asgiref.sync import async_to_sync
+from django.core.cache import cache
+from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from modules.audit.infrastructure.persistence.models.audit_event_model import AuditEventModel
+from modules.catalog.infrastructure.persistence.models.drive_object_model import DriveObjectModel
 from modules.catalog.infrastructure.persistence.models.file_version_model import FileVersionModel
 from modules.catalog.infrastructure.persistence.models.media_file_model import MediaFileModel
 from modules.catalog.infrastructure.persistence.models.media_file_tag_model import (
@@ -13,6 +20,7 @@ from modules.catalog.infrastructure.persistence.models.metadata_version_model im
 from modules.catalog.infrastructure.persistence.models.tag_model import TagModel
 from modules.companies.infrastructure.persistence.models.company_model import CompanyModel
 from modules.companies.infrastructure.persistence.models.membership_model import MembershipModel
+from modules.drive.infrastructure.persistence.models.drive_account_model import DriveAccountModel
 from modules.identity.adapters.api.authenticated_principal import AuthenticatedPrincipal
 from modules.identity.infrastructure.persistence.models.user_projection_model import (
     UserProjectionModel,
@@ -321,3 +329,160 @@ class MediaFileCollectionTest(TestCase):
             ).status_code
             == 400
         )
+
+    @override_settings(
+        CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    )
+    def test_playback_ticket_returns_stream_and_drive_fallback_for_authorized_file(self) -> None:
+        created = self._api(self.owner).post(
+            "/api/v1/media-files", self._payload(self.allowed_project.id), format="json"
+        ).json()
+        account = DriveAccountModel.objects.create(
+            company=self.company,
+            connected_by=self.owner,
+            provider_account_id="drive-account",
+            email_ciphertext=b"encrypted-email",
+            refresh_token_ciphertext=b"encrypted-token",
+            connected_at=timezone.now(),
+        )
+        DriveObjectModel.objects.create(
+            file_version_id=created["file_version_id"],
+            account=account,
+            external_id="drive-file-123",
+            object_reference="drive-file-123",
+            status="CONFIRMED",
+            name="clip.mov",
+            size_bytes=4096,
+            mime_type="video/quicktime",
+        )
+
+        response = self._api(self.owner).post(
+            f"/api/v1/media-files/{created['id']}/playback"
+        )
+
+        assert response.status_code == 201
+        assert response.json()["stream_url"].startswith("/api/v1/media-playback/")
+        assert response.json()["download_url"].startswith("/api/v1/media-download/")
+        assert response.json()["drive_url"] == (
+            "https://drive.google.com/file/d/drive-file-123/view"
+        )
+        assert response.json()["expires_in"] == 600
+
+    @override_settings(
+        CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    )
+    def test_playback_ticket_hides_restricted_file_from_administrator(self) -> None:
+        created = self._api(self.owner).post(
+            "/api/v1/media-files", self._payload(self.restricted_project.id), format="json"
+        ).json()
+        account = DriveAccountModel.objects.create(
+            company=self.company,
+            connected_by=self.owner,
+            provider_account_id="drive-account",
+            email_ciphertext=b"encrypted-email",
+            refresh_token_ciphertext=b"encrypted-token",
+            connected_at=timezone.now(),
+        )
+        DriveObjectModel.objects.create(
+            file_version_id=created["file_version_id"],
+            account=account,
+            external_id="restricted-file",
+            status="CONFIRMED",
+            name="restricted.mov",
+        )
+
+        response = self._api(self.admin).post(
+            f"/api/v1/media-files/{created['id']}/playback"
+        )
+
+        assert response.status_code == 404
+
+    @override_settings(
+        CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    )
+    def test_playback_stream_forwards_range_and_returns_partial_content(self) -> None:
+        created = self._api(self.owner).post(
+            "/api/v1/media-files", self._payload(self.allowed_project.id), format="json"
+        ).json()
+        account = DriveAccountModel.objects.create(
+            company=self.company,
+            connected_by=self.owner,
+            provider_account_id="drive-account",
+            email_ciphertext=b"encrypted-email",
+            refresh_token_ciphertext=b"encrypted-token",
+            connected_at=timezone.now(),
+        )
+        drive_object = DriveObjectModel.objects.create(
+            file_version_id=created["file_version_id"],
+            account=account,
+            external_id="drive-file-123",
+            status="CONFIRMED",
+            name="clip.mp4",
+            mime_type="video/mp4",
+        )
+        cache.set("media-playback:test-ticket", {"drive_object_id": str(drive_object.id)}, 60)
+        upstream = BytesIO(b"video-bytes")
+        upstream.status = 206
+        upstream.headers = {
+            "Content-Type": "video/mp4",
+            "Content-Length": "11",
+            "Content-Range": "bytes 0-10/100",
+            "Accept-Ranges": "bytes",
+        }
+        download_upstream = BytesIO(b"download-bytes")
+        download_upstream.status = 200
+        download_upstream.headers = {
+            "Content-Type": "video/mp4",
+            "Content-Length": "14",
+        }
+        protector = Mock()
+        protector.decrypt.return_value = "refresh-token"
+        oauth = Mock()
+        oauth.refresh_access_token.return_value = "access-token"
+        drive = Mock()
+        drive.open_media.side_effect = [upstream, download_upstream]
+
+        with (
+            patch(
+                "modules.catalog.adapters.api.media_playback_view.create_personal_data_protector",
+                return_value=protector,
+            ),
+            patch(
+                "modules.catalog.adapters.api.media_playback_view.create_google_oauth_gateway",
+                return_value=oauth,
+            ),
+            patch(
+                "modules.catalog.adapters.api.media_playback_view.create_google_drive_gateway",
+                return_value=drive,
+            ),
+        ):
+            response = APIClient().get(
+                "/api/v1/media-playback/test-ticket", HTTP_RANGE="bytes=0-10"
+            )
+
+            async def consume_stream() -> bytes:
+                chunks = [chunk async for chunk in response.streaming_content]
+                return b"".join(chunks)
+
+            content = async_to_sync(consume_stream)()
+
+            download_response = APIClient().get("/api/v1/media-download/test-ticket")
+
+            async def consume_download() -> bytes:
+                chunks = [chunk async for chunk in download_response.streaming_content]
+                return b"".join(chunks)
+
+            download_content = async_to_sync(consume_download)()
+
+        assert response.status_code == 206
+        assert content == b"video-bytes"
+        assert response["Content-Range"] == "bytes 0-10/100"
+        assert response["Accept-Ranges"] == "bytes"
+        assert download_content == b"download-bytes"
+        assert download_response["Content-Disposition"] == (
+            "attachment; filename*=UTF-8''clip.mp4"
+        )
+        assert drive.open_media.call_args_list == [
+            call("access-token", "drive-file-123", "bytes=0-10"),
+            call("access-token", "drive-file-123", ""),
+        ]

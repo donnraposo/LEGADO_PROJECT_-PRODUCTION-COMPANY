@@ -17,6 +17,9 @@ from modules.identity.infrastructure.cryptography.personal_data_protector import
 from modules.identity.infrastructure.persistence.models.user_projection_model import (
     UserProjectionModel,
 )
+from modules.operations.infrastructure.persistence.models.agent_command_model import (
+    AgentCommandModel,
+)
 from modules.operations.infrastructure.persistence.models.machine_model import MachineModel
 from modules.projects.infrastructure.persistence.models.client_model import ClientModel
 from modules.projects.infrastructure.persistence.models.project_model import ProjectModel
@@ -159,6 +162,13 @@ class UploadBatchTest(TestCase):
         assert created.json() == repeated.json()
         assert UploadBatchModel.objects.count() == 1
         item_id = created.json()["items"][0]["id"]
+        commands = list(AgentCommandModel.objects.all())
+        assert len(commands) == 1
+        assert commands[0].machine_id == self.machine.id
+        assert commands[0].command_type == "UPLOAD_FILE"
+        assert commands[0].resource_type == "UPLOAD_ITEM"
+        assert str(commands[0].resource_id) == item_id
+        assert commands[0].payload == {}
 
         first_attempt = self.api.post(f"/api/v1/upload-items/{item_id}/attempts")
         repeated_attempt = self.api.post(f"/api/v1/upload-items/{item_id}/attempts")
@@ -196,6 +206,14 @@ class UploadBatchTest(TestCase):
         conflicting_payload = {**payload, "folder_date": "2026-08-29"}
         conflict = self.api.post("/api/v1/upload-batches", conflicting_payload, format="json")
         assert conflict.status_code == 409
+
+    def test_realtime_ticket_is_short_lived_and_contains_no_oidc_token(self) -> None:
+        response = self.api.post("/api/v1/upload-realtime/ticket")
+
+        assert response.status_code == 201
+        assert response.json()["expires_in"] == 60
+        assert len(response.json()["ticket"]) >= 40
+        assert "token" not in response.json()["ticket"].casefold()
 
     def test_batch_controls_are_idempotent_and_versioned(self) -> None:
         created = self.api.post(
@@ -281,6 +299,13 @@ class UploadBatchTest(TestCase):
         assert gateway.created == 1
         attempt = UploadAttemptModel.objects.get(id=first.json()["attempt_id"])
         assert b"upload.google.test" not in bytes(attempt.session_reference_ciphertext)
+
+        gateway.state = ResumableSessionState("ACTIVE", 600)
+        reconciled = self.api.post(endpoint, body, format="json")
+        assert reconciled.status_code == 200
+        assert reconciled.json()["confirmed_bytes"] == 600
+        detail = self.api.get(f"/api/v1/upload-batches/{created.json()['id']}")
+        assert detail.json()["confirmed_bytes"] == 600
 
         gateway.state = ResumableSessionState("EXPIRED")
         renewed = self.api.post(endpoint, body, format="json")

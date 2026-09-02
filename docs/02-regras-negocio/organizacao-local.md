@@ -8,7 +8,7 @@ Seleção de dispositivos, datas, estrutura, prévia, preservação e abertura d
 
 O usuário poderá selecionar:
 
-- um dispositivo inteiro;
+- um HARD DISK inteiro pelo botão `Selecionar HD`;
 - uma ou mais pastas específicas;
 - arquivos específicos;
 - quais arquivos serão organizados;
@@ -55,6 +55,11 @@ O sistema poderá transportar qualquer formato. A extração de metadados avanç
 ## 14. Estrutura de organização
 
 A estrutura local e a estrutura lógica do Drive serão:
+
+Ao iniciar cada análise, o agente exige a escolha explícita da mídia ou de uma pasta no
+PC onde o projeto será organizado. O último local é persistido no SQLite sem credenciais
+apenas como sugestão e nunca é reutilizado sem confirmação. O destino não pode estar
+dentro de uma origem selecionada. Após a escolha, o agente calcula automaticamente:
 
 ```text
 Cliente/

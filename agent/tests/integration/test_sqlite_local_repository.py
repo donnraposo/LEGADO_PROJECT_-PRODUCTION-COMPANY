@@ -3,6 +3,9 @@ from uuid import uuid4
 from legado_agent.domain.agent_command import AgentCommand
 from legado_agent.infrastructure.persistence.sqlite_database import SQLiteDatabase
 from legado_agent.infrastructure.persistence.sqlite_local_repository import SQLiteLocalRepository
+from legado_agent.infrastructure.persistence.sqlite_settings_repository import (
+    SQLiteSettingsRepository,
+)
 
 
 def test_installation_and_queue_survive_repository_restart(tmp_path) -> None:
@@ -40,7 +43,7 @@ def test_database_schema_contains_no_token_or_password_column(tmp_path) -> None:
     database.migrate()
 
     with database.connect() as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 5
         schema = " ".join(
             row["sql"] or ""
             for row in connection.execute(
@@ -65,7 +68,7 @@ def test_database_upgrades_existing_version_one_without_losing_installation(tmp_
     database.migrate()
 
     with database.connect() as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 5
         assert connection.execute("SELECT COUNT(*) FROM installation").fetchone()[0] == 1
         tables = {
             row["name"]
@@ -79,3 +82,14 @@ def test_database_upgrades_existing_version_one_without_losing_installation(tmp_
         "organization_operations",
         "organization_items",
     } <= tables
+
+
+def test_organization_root_is_persisted_without_credentials(tmp_path) -> None:
+    database = SQLiteDatabase(tmp_path / "agent.sqlite3")
+    database.migrate()
+    repository = SQLiteSettingsRepository(database)
+    root = tmp_path / "Arquivos organizados"
+
+    repository.set_organization_root(root)
+
+    assert SQLiteSettingsRepository(database).organization_root() == root

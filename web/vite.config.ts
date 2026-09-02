@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/api": backendTarget,
         "/health": backendTarget,
+        "/ws": { target: backendTarget, ws: true },
       },
     },
     test: {

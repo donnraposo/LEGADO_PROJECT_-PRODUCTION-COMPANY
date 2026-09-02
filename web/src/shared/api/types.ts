@@ -30,6 +30,8 @@ export interface DriveAuthorization {
   authorization_url: string;
 }
 
+export type MediaPlaybackSession = components["schemas"]["MediaPlaybackSession"];
+
 export interface DriveFolderTree {
   path: string;
   folders: {

@@ -16,6 +16,7 @@ from modules.uploads.infrastructure.persistence.models import (
     UploadCheckpointModel,
     UploadItemModel,
 )
+from modules.uploads.infrastructure.upload_events import publish_upload_change
 
 
 class DjangoUploadSessionService:
@@ -69,6 +70,7 @@ class DjangoUploadSessionService:
             state = self._drive_gateway.inspect_resumable_session(session_url, item.size_bytes)
             if state.status == "ACTIVE":
                 self._persist_drive_checkpoint(active, state.confirmed_bytes)
+                publish_upload_change(company_id, item.batch_id)
                 return self._response(active, session_url, state.confirmed_bytes), False
             if state.status == "COMPLETED":
                 active.status = "SUCCEEDED"
@@ -77,6 +79,7 @@ class DjangoUploadSessionService:
                 item.status = "VERIFYING"
                 item.save(update_fields=["status", "updated_at"])
                 self._persist_drive_checkpoint(active, item.size_bytes)
+                publish_upload_change(company_id, item.batch_id)
                 return self._response(active, session_url, item.size_bytes), False
             active.status = "EXPIRED"
             active.failure_code = "SESSION_EXPIRED"
@@ -118,6 +121,7 @@ class DjangoUploadSessionService:
         )
         item.status = "READY"
         item.save(update_fields=["status", "updated_at"])
+        publish_upload_change(company_id, item.batch_id)
         return self._response(active, session_url, 0), True
 
     @staticmethod

@@ -7,6 +7,9 @@ from django.db import IntegrityError, models, transaction
 
 from modules.catalog.infrastructure.persistence.models.file_version_model import FileVersionModel
 from modules.drive.infrastructure.persistence.models import DriveAccountModel, DriveFolderModel
+from modules.operations.infrastructure.persistence.django_operations_repository import (
+    DjangoOperationsRepository,
+)
 from modules.operations.infrastructure.persistence.models.machine_model import MachineModel
 from modules.projects.infrastructure.persistence.models.project_access_model import (
     ProjectAccessModel,
@@ -18,6 +21,7 @@ from modules.uploads.infrastructure.persistence.models import (
     UploadCheckpointModel,
     UploadItemModel,
 )
+from modules.uploads.infrastructure.upload_events import publish_upload_change
 
 
 class UploadConflictError(ValueError):
@@ -72,6 +76,7 @@ class DjangoUploadService:
                 "updated_at",
             ]
         )
+        publish_upload_change(company_id, batch.id)
         return self._batch_detail(batch)
 
     def agent_control(self, company_id, machine_id, item_id) -> dict:
@@ -118,6 +123,7 @@ class DjangoUploadService:
             and not batch.items.exclude(status__in=["SUCCEEDED", "FAILED", "CANCELLED"]).exists()
         ):
             UploadBatchModel.objects.filter(id=batch.id).update(status="CANCELLED")
+        publish_upload_change(company_id, batch.id)
         return self._item(item)
 
     @transaction.atomic
@@ -154,6 +160,7 @@ class DjangoUploadService:
         if existing is not None:
             if existing.payload_digest != digest:
                 raise UploadConflictError("A chave de idempotência já foi usada com outros dados.")
+            self._ensure_upload_commands(existing, user_id)
             return self._batch_detail(existing), False
         project = ProjectModel.objects.filter(
             id=project_id, company_id=company_id, archived_at__isnull=True
@@ -222,9 +229,26 @@ class DjangoUploadService:
                     checksum_digest=version.checksum_digest,
                     position=position,
                 )
+            self._ensure_upload_commands(batch, user_id)
+            publish_upload_change(company_id, batch.id)
         except IntegrityError as exc:
             raise UploadConflictError("Um arquivo já participa de outro lote ativo.") from exc
         return self._batch_detail(batch), True
+
+    @staticmethod
+    def _ensure_upload_commands(batch: UploadBatchModel, user_id: UUID) -> None:
+        repository = DjangoOperationsRepository()
+        for item in batch.items.order_by("position"):
+            repository.create_command(
+                company_id=batch.company_id,
+                user_id=user_id,
+                machine_id=batch.machine_id,
+                command_type="UPLOAD_FILE",
+                resource_type="UPLOAD_ITEM",
+                resource_id=item.id,
+                payload={},
+                idempotency_key=f"upload-item:{item.id}",
+            )
 
     def list_batches(self, company_id: UUID, user_id: UUID, role: str) -> list[dict]:
         batches = UploadBatchModel.objects.filter(company_id=company_id)
@@ -262,6 +286,7 @@ class DjangoUploadService:
             item.attempts.order_by("-sequence").values_list("sequence", flat=True).first() or 0
         ) + 1
         attempt = UploadAttemptModel.objects.create(item=item, sequence=sequence)
+        publish_upload_change(company_id, item.batch_id)
         return self._attempt(attempt), True
 
     @transaction.atomic
@@ -303,6 +328,7 @@ class DjangoUploadService:
         UploadBatchModel.objects.filter(id=attempt.item.batch_id).exclude(
             status__in=["PAUSE_REQUESTED", "CANCEL_REQUESTED"]
         ).update(status="RUNNING")
+        publish_upload_change(company_id, attempt.item.batch_id)
         return self._checkpoint(checkpoint)
 
     @staticmethod

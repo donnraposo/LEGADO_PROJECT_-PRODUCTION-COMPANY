@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { BackendClient } from "../../shared/api/backendClient";
 import type { Project, UploadBatchDetail } from "../../shared/api/types";
 import { formatFileSize } from "../../shared/format/fileSize";
+import { formatUploadStatus } from "../../shared/format/uploadStatus";
 
 interface Props {
   api: BackendClient;
@@ -36,39 +37,100 @@ function friendlyError(error: Error | null) {
 
 export function UploadBatchPanel({ api, companyId, projectId, projects }: Props) {
   const queryClient = useQueryClient();
-  const storageKey = `legado:upload-batch:${companyId}`;
-  const [formProjectId, setFormProjectId] = useState(projectId);
+  const storageKey = `legado:upload-batch:${companyId}:${projectId}`;
+  const [open, setOpen] = useState(false);
   const [folderDate, setFolderDate] = useState(today);
   const [category, setCategory] = useState<keyof typeof categoryLabels>("ORIGINAIS");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [activeBatchId, setActiveBatchId] = useState(() => sessionStorage.getItem(storageKey) ?? "");
+  const [activeBatchId, setActiveBatchId] = useState("");
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const closeButton = useRef<HTMLButtonElement>(null);
   const idempotencyKey = useRef(crypto.randomUUID());
 
-  useEffect(() => setFormProjectId(projectId), [projectId]);
+  useEffect(() => {
+    setSelectedFiles([]);
+    setActiveBatchId(sessionStorage.getItem(storageKey) ?? "");
+  }, [projectId, storageKey]);
   useEffect(() => {
     if (activeBatchId) sessionStorage.setItem(storageKey, activeBatchId);
   }, [activeBatchId, storageKey]);
+  useEffect(() => {
+    if (!open) return;
+    closeButton.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
+
+  useEffect(() => {
+    if (!companyId || !open) return;
+    let disposed = false;
+    let socket: WebSocket | undefined;
+    let retryTimer: number | undefined;
+    let retryDelay = 1000;
+    const connect = async () => {
+      try {
+        const { ticket } = await api.uploadRealtimeTicket(companyId);
+        if (disposed) return;
+        const scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        socket = new WebSocket(`${scheme}://${window.location.host}/ws/uploads/${ticket}`);
+        socket.onopen = () => { retryDelay = 1000; setRealtimeConnected(true); };
+        socket.onmessage = (event) => {
+          const message = JSON.parse(event.data) as { type?: string; batch_id?: string };
+          if (message.type !== "upload.changed") return;
+          void queryClient.invalidateQueries({ queryKey: ["upload-batches", companyId] });
+          if (message.batch_id) {
+            void queryClient.invalidateQueries({ queryKey: ["upload-batch", companyId, message.batch_id] });
+          }
+        };
+        socket.onclose = () => {
+          setRealtimeConnected(false);
+          if (!disposed) {
+            retryTimer = window.setTimeout(connect, retryDelay);
+            retryDelay = Math.min(retryDelay * 2, 30_000);
+          }
+        };
+        socket.onerror = () => socket?.close();
+      } catch {
+        setRealtimeConnected(false);
+        if (!disposed) retryTimer = window.setTimeout(connect, Math.min(retryDelay *= 2, 30_000));
+      }
+    };
+    void connect();
+    return () => {
+      disposed = true;
+      setRealtimeConnected(false);
+      if (retryTimer) window.clearTimeout(retryTimer);
+      socket?.close();
+    };
+  }, [api, companyId, open, queryClient]);
 
   const batches = useQuery({
     queryKey: ["upload-batches", companyId],
     queryFn: () => api.uploadBatches(companyId),
     enabled: Boolean(companyId),
-    refetchInterval: 5000,
+    refetchInterval: realtimeConnected ? 30_000 : 5000,
   });
   const projectFiles = useQuery({
-    queryKey: ["media", companyId, formProjectId, ""],
-    queryFn: () => api.mediaFiles(companyId, formProjectId),
-    enabled: Boolean(companyId && formProjectId),
+    queryKey: ["media", companyId, projectId, ""],
+    queryFn: () => api.mediaFiles(companyId, projectId),
+    enabled: Boolean(open && companyId && projectId),
   });
+  const projectBatches = useMemo(
+    () => (batches.data?.items ?? []).filter((batch) => batch.project_id === projectId),
+    [batches.data, projectId],
+  );
   useEffect(() => {
-    if (!activeBatchId && batches.data?.items[0]) setActiveBatchId(batches.data.items[0].id);
-  }, [activeBatchId, batches.data]);
+    if (!projectBatches.some((batch) => batch.id === activeBatchId)) {
+      setActiveBatchId(projectBatches[0]?.id ?? "");
+    }
+  }, [activeBatchId, projectBatches]);
 
   const detail = useQuery({
     queryKey: ["upload-batch", companyId, activeBatchId],
     queryFn: () => api.uploadBatch(companyId, activeBatchId),
-    enabled: Boolean(companyId && activeBatchId),
-    refetchInterval: (query) => terminalStatuses.has((query.state.data as UploadBatchDetail | undefined)?.status ?? "") ? false : 2000,
+    enabled: Boolean(open && companyId && activeBatchId),
+    refetchInterval: (query) => terminalStatuses.has((query.state.data as UploadBatchDetail | undefined)?.status ?? "") ? false : (realtimeConnected ? 30_000 : 2000),
   });
 
   const availableFiles = useMemo(
@@ -82,9 +144,9 @@ export function UploadBatchPanel({ api, companyId, projectId, projects }: Props)
       if (!chosen.length) throw new Error("Selecione ao menos um arquivo para enviar.");
       const machines = new Set(chosen.map((file) => file.source_machine_id));
       if (machines.size !== 1) throw new Error("Selecione arquivos da mesma máquina para este lote.");
-      await api.ensureDriveFolders(companyId, formProjectId, folderDate);
+      await api.ensureDriveFolders(companyId, projectId, folderDate);
       return api.createUploadBatch(companyId, {
-        project_id: formProjectId,
+        project_id: projectId,
         machine_id: chosen[0].source_machine_id!,
         folder_date: folderDate,
         idempotency_key: idempotencyKey.current,
@@ -116,17 +178,31 @@ export function UploadBatchPanel({ api, companyId, projectId, projects }: Props)
   });
 
   const error = createBatch.error || controlBatch.error || batches.error || detail.error || projectFiles.error;
+  const projectName = projects.find((project) => project.id === projectId)?.name ?? "Projeto selecionado";
+  const activeCount = projectBatches.filter((batch) => !terminalStatuses.has(batch.status)).length;
 
   return (
-    <section className="upload-panel" id="uploads" aria-labelledby="upload-title">
-      <div className="upload-heading">
-        <div><span className="eyebrow">Envios ao Google Drive</span><h2 id="upload-title">Lotes de arquivos</h2></div>
-        {current && <span className="status-pill">{current.status}</span>}
-      </div>
+    <>
+      <section className="upload-launcher" id="uploads" aria-label="Envios ao Google Drive">
+        <div><strong>Envios ao Google Drive</strong><span>Crie e acompanhe os lotes do projeto atual.</span></div>
+        <button className="ghost-button dark" disabled={!projectId} onClick={() => setOpen(true)} type="button">
+          Gerenciar envios{activeCount ? ` · ${activeCount} ativo(s)` : ""}
+        </button>
+      </section>
+
+      {open ? <div className="upload-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setOpen(false)}>
+        <section className="upload-modal" aria-labelledby="upload-title" aria-modal="true" role="dialog">
+          <header className="upload-heading">
+            <div><span className="eyebrow">Envios ao Google Drive</span><h2 id="upload-title">Lotes de {projectName}</h2></div>
+            <div className="upload-heading-actions">
+              {current && <span className="status-pill">{formatUploadStatus(current.status)}</span>}
+              <button aria-label="Fechar envios" className="icon-button" onClick={() => setOpen(false)} ref={closeButton} type="button">×</button>
+            </div>
+          </header>
+          <div className="upload-modal-body">
       {error && <p className="inline-error" role="alert">{friendlyError(error)}</p>}
 
       <form className="batch-form" onSubmit={(event) => { event.preventDefault(); createBatch.mutate(); }}>
-        <label>Projeto<select value={formProjectId} onChange={(event) => { setFormProjectId(event.target.value); setSelectedFiles([]); }}>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
         <label>Data<input type="date" value={folderDate} onChange={(event) => setFolderDate(event.target.value)} /></label>
         <label>Categoria<select value={category} onChange={(event) => setCategory(event.target.value as keyof typeof categoryLabels)}>{Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <button className="primary-button" type="submit" disabled={createBatch.isPending || !selectedFiles.length}>{createBatch.isPending ? "Criando lote…" : `Criar lote (${selectedFiles.length})`}</button>
@@ -136,7 +212,7 @@ export function UploadBatchPanel({ api, companyId, projectId, projects }: Props)
         {availableFiles.length ? availableFiles.map((file) => <label key={file.id} className="batch-file-option"><input type="checkbox" checked={selectedFiles.includes(file.id)} onChange={(event) => setSelectedFiles((currentFiles) => event.target.checked ? [...currentFiles, file.id] : currentFiles.filter((id) => id !== file.id))} /><span><strong>{file.display_name}</strong><small>{formatFileSize(file.size_bytes)}</small></span></label>) : <p className="muted-message">Nenhum arquivo disponível neste projeto.</p>}
       </div>
 
-      {(batches.data?.items.length ?? 0) > 0 && <div className="batch-history"><label>Lote exibido<select value={activeBatchId} onChange={(event) => setActiveBatchId(event.target.value)}>{batches.data?.items.map((batch) => <option key={batch.id} value={batch.id}>{new Date(batch.created_at).toLocaleString("pt-BR")} · {batch.total_items} arquivo(s)</option>)}</select></label></div>}
+      {projectBatches.length > 0 && <div className="batch-history"><label>Lote exibido<select value={activeBatchId} onChange={(event) => setActiveBatchId(event.target.value)}>{projectBatches.map((batch) => <option key={batch.id} value={batch.id}>{new Date(batch.created_at).toLocaleString("pt-BR")} · {batch.total_items} arquivo(s)</option>)}</select></label></div>}
 
       {current && <div className="batch-progress">
         <div className="batch-controls">
@@ -147,8 +223,11 @@ export function UploadBatchPanel({ api, companyId, projectId, projects }: Props)
         </div>
         <div className="progress-label"><strong>Progresso geral</strong><span>{current.progress_percent}% · {formatFileSize(current.confirmed_bytes)} de {formatFileSize(current.total_bytes)}</span></div>
         <progress value={current.progress_percent} max="100" />
-        <div className="batch-item-list">{current.items.map((item) => <article key={item.id}><div className="progress-label"><strong>{item.final_name}</strong><span>{item.progress_percent}% · {formatFileSize(item.confirmed_bytes)} de {formatFileSize(item.size_bytes)}</span></div><progress value={item.progress_percent} max="100" /><small>{categoryLabels[item.destination_category]} · {item.status}</small></article>)}</div>
+        <div className="batch-item-list">{current.items.map((item) => <article key={item.id}><div className="progress-label"><strong>{item.final_name}</strong><span>{item.progress_percent}% · {formatFileSize(item.confirmed_bytes)} de {formatFileSize(item.size_bytes)}</span></div><progress value={item.progress_percent} max="100" /><small>{categoryLabels[item.destination_category]} · {formatUploadStatus(item.status)}</small></article>)}</div>
       </div>}
-    </section>
+          </div>
+        </section>
+      </div> : null}
+    </>
   );
 }

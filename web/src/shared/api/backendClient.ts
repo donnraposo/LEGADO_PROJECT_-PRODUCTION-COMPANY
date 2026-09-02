@@ -1,4 +1,4 @@
-import type { Collection, Company, CreateUploadBatch, CurrentUser, DriveAccount, DriveAuthorization, DriveFolderTree, MediaFile, Project, Tag, UploadBatch, UploadBatchDetail } from "./types";
+import type { Collection, Company, CreateUploadBatch, CurrentUser, DriveAccount, DriveAuthorization, DriveFolderTree, MediaFile, MediaPlaybackSession, Project, Tag, UploadBatch, UploadBatchDetail } from "./types";
 
 type TokenProvider = () => Promise<string>;
 
@@ -45,6 +45,14 @@ export class BackendClient {
     );
   }
 
+  mediaPlayback(companyId: string, mediaFileId: string) {
+    return this.request<MediaPlaybackSession>(
+      `/api/v1/media-files/${mediaFileId}/playback`,
+      { method: "POST" },
+      companyId,
+    );
+  }
+
   setTag(companyId: string, mediaFileId: string, tagId: string, selected: boolean) {
     return this.request<void>(
       `/api/v1/media-files/${mediaFileId}/tags/${tagId}`,
@@ -79,6 +87,14 @@ export class BackendClient {
 
   uploadBatches(companyId: string) {
     return this.request<Collection<UploadBatch>>("/api/v1/upload-batches", {}, companyId);
+  }
+
+  uploadRealtimeTicket(companyId: string) {
+    return this.request<{ ticket: string; expires_in: number }>(
+      "/api/v1/upload-realtime/ticket",
+      { method: "POST" },
+      companyId,
+    );
   }
 
   uploadBatch(companyId: string, batchId: string) {

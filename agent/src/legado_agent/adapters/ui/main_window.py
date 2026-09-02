@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from legado_agent.adapters.ui.analysis_task import AnalysisTask
 from legado_agent.adapters.ui.background_task import BackgroundTask
 from legado_agent.adapters.ui.organization_task import OrganizationTask
+from legado_agent.adapters.ui.storage_location_dialog import StorageLocationDialog
 from legado_agent.application.agent_coordinator import AgentCoordinator
 from legado_agent.application.analyze_selection_use_case import AnalyzeSelectionUseCase
 from legado_agent.application.confirm_organization_use_case import (
@@ -57,6 +58,9 @@ from legado_agent.infrastructure.persistence.sqlite_local_repository import SQLi
 from legado_agent.infrastructure.persistence.sqlite_organization_repository import (
     SQLiteOrganizationRepository,
 )
+from legado_agent.infrastructure.persistence.sqlite_settings_repository import (
+    SQLiteSettingsRepository,
+)
 from legado_agent.infrastructure.persistence.sqlite_upload_repository import (
     SQLiteUploadRepository,
 )
@@ -71,6 +75,7 @@ class MainWindow(QMainWindow):
         organization_repository: SQLiteOrganizationRepository,
         session: AgentSession,
         upload_repository: SQLiteUploadRepository | None = None,
+        settings_repository: SQLiteSettingsRepository | None = None,
     ) -> None:
         super().__init__()
         self._config = config
@@ -79,6 +84,7 @@ class MainWindow(QMainWindow):
         self._organization_repository = organization_repository
         self._session = session
         self._upload_repository = upload_repository
+        self._settings_repository = settings_repository
         self._upload_transport: HttpResumableUploadTransport | None = None
         self._backend: HttpBackendGateway | None = None
         self._coordinator: AgentCoordinator | None = None
@@ -92,6 +98,9 @@ class MainWindow(QMainWindow):
         self._available_projects: list[tuple[UUID, str, UUID, str]] = []
         self._projects: dict[int, tuple[str, UUID, str]] = {}
         self._selected_paths: list[Path] = []
+        self._last_destination_root = (
+            settings_repository.organization_root() if settings_repository else None
+        )
         self._destination_root: Path | None = None
         self._current_batch = None
         self._current_items = []
@@ -107,7 +116,7 @@ class MainWindow(QMainWindow):
 
     def _build_interface(self) -> None:
         self._status = QLabel("Desconectado — autenticação necessária")
-        self._login = QPushButton("Entrar")
+        self._login = QPushButton("LOGIN")
         self._login.clicked.connect(self._start_login)
         self._company = QComboBox()
         self._company.setEnabled(False)
@@ -115,10 +124,6 @@ class MainWindow(QMainWindow):
         self._new_company = QPushButton("+ Nova empresa")
         self._new_company.setEnabled(False)
         self._new_company.clicked.connect(self._create_company)
-        self._connect = QPushButton("Tentar novamente")
-        self._connect.setEnabled(False)
-        self._connect.hide()
-        self._connect.clicked.connect(self._connect_machine)
         self._poll = QPushButton("Atualizar fila")
         self._poll.setEnabled(False)
         self._poll.clicked.connect(self._poll_once)
@@ -126,7 +131,6 @@ class MainWindow(QMainWindow):
         session_controls.addWidget(self._login)
         session_controls.addWidget(self._company)
         session_controls.addWidget(self._new_company)
-        session_controls.addWidget(self._connect)
         session_controls.addWidget(self._poll)
 
         self._client = QComboBox()
@@ -144,12 +148,12 @@ class MainWindow(QMainWindow):
         self._choose_folder = QPushButton("Selecionar pasta")
         self._choose_folder.setEnabled(False)
         self._choose_folder.clicked.connect(self._select_folder)
+        self._choose_hard_disk = QPushButton("Selecionar HD")
+        self._choose_hard_disk.setEnabled(False)
+        self._choose_hard_disk.clicked.connect(self._select_hard_disk)
         self._choose_files = QPushButton("Selecionar arquivos")
         self._choose_files.setEnabled(False)
         self._choose_files.clicked.connect(self._select_files)
-        self._choose_destination = QPushButton("Selecionar destino")
-        self._choose_destination.setEnabled(False)
-        self._choose_destination.clicked.connect(self._select_destination)
         self._analyze = QPushButton("Analisar e gerar prévia")
         self._analyze.setEnabled(False)
         self._analyze.clicked.connect(self._start_analysis)
@@ -170,15 +174,15 @@ class MainWindow(QMainWindow):
         analysis_controls.addWidget(self._project)
         analysis_controls.addWidget(self._new_project)
         analysis_controls.addWidget(self._choose_folder)
+        analysis_controls.addWidget(self._choose_hard_disk)
         analysis_controls.addWidget(self._choose_files)
-        analysis_controls.addWidget(self._choose_destination)
         analysis_controls.addWidget(self._analyze)
         analysis_controls.addWidget(self._cancel_analysis)
         analysis_controls.addWidget(self._organize)
         analysis_controls.addWidget(self._cancel_organization)
 
         self._selection_label = QLabel("Nenhum arquivo ou pasta selecionado")
-        self._destination_label = QLabel("Destino-base não selecionado")
+        self._destination_label = QLabel(self._destination_summary())
         self._analysis_progress = QProgressBar()
         self._analysis_progress.setRange(0, 1)
         self._analysis_progress.setValue(0)
@@ -258,8 +262,6 @@ class MainWindow(QMainWindow):
         self._timer.stop()
         self._coordinator = None
         self._poll.setEnabled(False)
-        self._connect.setEnabled(False)
-        self._connect.hide()
         self._clear_projects()
         if self._backend is None or company_id is None:
             return
@@ -321,7 +323,7 @@ class MainWindow(QMainWindow):
         self._current_batch = None
         self._current_items = []
         self._selection_label.setText("Nenhum arquivo ou pasta selecionado")
-        self._destination_label.setText("Destino-base não selecionado")
+        self._destination_label.setText(self._destination_summary())
         self._update_analysis_controls()
 
     def _create_company(self) -> None:
@@ -443,9 +445,7 @@ class MainWindow(QMainWindow):
                 StreamingSha256(),
             )
         self._coordinator = AgentCoordinator(self._repository, self._backend, upload_use_case)
-        self._connect.setEnabled(False)
-        self._connect.hide()
-        self._status.setText("Registrando presença da máquina...")
+        self._status.setText("Iniciando sessão...")
         self._run(
             lambda: self._coordinator.connect(company_id),
             self._machine_connected,
@@ -453,9 +453,7 @@ class MainWindow(QMainWindow):
         )
 
     def _machine_connected(self, machine_id: object) -> None:
-        self._connect.setEnabled(False)
-        self._connect.hide()
-        self._status.setText(f"Máquina online: {machine_id}")
+        self._status.setText("Sessão ativa")
         self._poll.setEnabled(True)
         self._timer.start()
         self._poll_once()
@@ -465,9 +463,9 @@ class MainWindow(QMainWindow):
         self._coordinator = None
         self._timer.stop()
         self._poll.setEnabled(False)
-        self._connect.setEnabled(self._company_id() is not None)
-        self._connect.show()
-        self._status.setText(f"Não foi possível conectar esta máquina: {message}")
+        self._status.setText(f"Sessão temporariamente indisponível: {message}")
+        if self._company_id() is not None:
+            QTimer.singleShot(self._config.poll_interval_seconds * 1000, self._connect_machine)
         self._update_creation_controls()
         self._update_analysis_controls()
 
@@ -479,7 +477,7 @@ class MainWindow(QMainWindow):
 
     def _poll_completed(self, processed: object) -> None:
         self._refresh_command_table()
-        self._status.setText(f"Máquina online — {processed} comando(s) processado(s)")
+        self._status.setText(f"Sessão ativa — {processed} tarefa(s) processada(s)")
 
     def _refresh_command_table(self) -> None:
         company_id = self._company_id()
@@ -502,16 +500,14 @@ class MainWindow(QMainWindow):
         if selected:
             self._add_selected_paths([Path(selected)])
 
+    def _select_hard_disk(self) -> None:
+        selected = StorageLocationDialog.choose_media(self)
+        if selected is not None:
+            self._add_selected_paths([selected])
+
     def _select_files(self) -> None:
         selected, _filter = QFileDialog.getOpenFileNames(self, "Selecionar arquivos para análise")
         self._add_selected_paths([Path(path) for path in selected])
-
-    def _select_destination(self) -> None:
-        selected = QFileDialog.getExistingDirectory(self, "Selecionar pasta-base da organização")
-        if selected:
-            self._destination_root = Path(selected)
-            self._destination_label.setText(f"Destino-base: {selected}")
-            self._update_analysis_controls()
 
     def _add_selected_paths(self, paths: list[Path]) -> None:
         existing = {str(path).casefold() for path in self._selected_paths}
@@ -526,13 +522,16 @@ class MainWindow(QMainWindow):
     def _start_analysis(self) -> None:
         company_id = self._company_id()
         context = self._project_context()
-        if (
-            company_id is None
-            or context is None
-            or not self._selected_paths
-            or self._destination_root is None
-        ):
+        if company_id is None or context is None or not self._selected_paths:
             return
+        destination_root = self._choose_analysis_destination()
+        if destination_root is None:
+            return
+        self._destination_root = destination_root
+        self._last_destination_root = destination_root
+        if self._settings_repository:
+            self._settings_repository.set_organization_root(destination_root)
+        self._destination_label.setText(self._destination_summary())
         client_name, project_id, project_name = context
         use_case = AnalyzeSelectionUseCase(
             self._analysis_repository,
@@ -548,7 +547,7 @@ class MainWindow(QMainWindow):
                 "project_id": project_id,
                 "project_name": project_name,
                 "selected_paths": list(self._selected_paths),
-                "destination_root": self._destination_root,
+                "destination_root": destination_root,
             },
         )
         self._analysis_task.signals.progress.connect(self._analysis_progressed)
@@ -601,12 +600,18 @@ class MainWindow(QMainWindow):
                 Path(batch.destination_root) if batch.destination_root else None
             )
             self._destination_label.setText(
-                f"Destino-base: {batch.destination_root}"
+                f"Organização automática: {batch.destination_root}\\Cliente\\Projeto\\Ano\\Mês\\Dia"
                 if batch.destination_root
                 else "Prévia antiga sem destino-base; execute nova análise"
             )
             self._render_analysis(batch, self._analysis_repository.list_items(batch.id))
             self._status.setText(f"Prévia anterior recuperada — estado {batch.status}")
+        else:
+            self._destination_root = None
+            self._current_batch = None
+            self._current_items = []
+            self._analysis_table.setRowCount(0)
+            self._destination_label.setText(self._destination_summary())
 
     def _render_analysis(self, batch, items) -> None:
         self._current_batch = batch
@@ -762,8 +767,8 @@ class MainWindow(QMainWindow):
         if self._backend is None or machine_id is None:
             QMessageBox.warning(
                 self,
-                "Máquina não conectada",
-                "Conecte esta máquina antes de organizar os arquivos.",
+                "Sessão indisponível",
+                "Entre novamente antes de organizar os arquivos.",
             )
             return
         self._organization_task = OrganizationTask(
@@ -846,11 +851,9 @@ class MainWindow(QMainWindow):
             and self._organization_task is None
         )
         self._choose_folder.setEnabled(available)
+        self._choose_hard_disk.setEnabled(available)
         self._choose_files.setEnabled(available)
-        self._choose_destination.setEnabled(available)
-        self._analyze.setEnabled(
-            available and bool(self._selected_paths) and self._destination_root is not None
-        )
+        self._analyze.setEnabled(available and bool(self._selected_paths))
         active = self._organization_repository.active_operation()
         resumable = active is not None and active.company_id == self._company_id()
         ready = (
@@ -898,6 +901,36 @@ class MainWindow(QMainWindow):
 
     def _project_context(self) -> tuple[str, UUID, str] | None:
         return self._projects.get(self._project.currentIndex())
+
+    def _choose_analysis_destination(self) -> Path | None:
+        selected = StorageLocationDialog.choose_destination(
+            self, self._last_destination_root
+        )
+        if selected is None:
+            self._status.setText("Análise cancelada — nenhum destino foi escolhido.")
+            return None
+        resolved_destination = selected.resolve(strict=False)
+        for source in self._selected_paths:
+            resolved_source = source.resolve(strict=False)
+            if resolved_destination == resolved_source or (
+                resolved_source.is_dir()
+                and resolved_destination.is_relative_to(resolved_source)
+            ):
+                QMessageBox.warning(
+                    self,
+                    "Destino dentro da origem",
+                    "Escolha um destino fora da pasta ou do HARD DISK selecionado para análise.",
+                )
+                return None
+        return selected
+
+    def _destination_summary(self) -> str:
+        if self._destination_root is None:
+            return "Destino: será escolhido ao clicar em Analisar e gerar prévia"
+        return (
+            f"Destino desta prévia: {self._destination_root}"
+            "\\Cliente\\Projeto\\Ano\\Mês\\Dia"
+        )
 
     def closeEvent(self, event) -> None:  # noqa: N802 - nome definido pela API Qt
         self._timer.stop()

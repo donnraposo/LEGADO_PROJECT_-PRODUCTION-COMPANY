@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/upload-realtime/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emite ingresso efêmero e de uso único para o canal de uploads */
+        post: operations["createUploadRealtimeTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/upload-batches": {
         parameters: {
             query?: never;
@@ -388,6 +405,57 @@ export interface paths {
         patch: operations["updateMediaFileMetadata"];
         trace?: never;
     };
+    "/api/v1/media-files/{media_file_id}/playback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emite reprodução temporária e link de fallback do Google Drive */
+        post: operations["createMediaPlaybackSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/media-playback/{ticket}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transmite partes do vídeo usando um ticket opaco e temporário */
+        get: operations["streamMediaPlayback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/media-download/{ticket}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Baixa o arquivo usando um ticket opaco e temporário */
+        get: operations["downloadMediaFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/media-files/{media_file_id}/metadata-history": {
         parameters: {
             query?: never;
@@ -655,6 +723,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        UploadRealtimeTicket: {
+            ticket: string;
+            expires_in: number;
+        };
         UploadControlRequest: {
             /** @enum {string} */
             action: "PAUSE" | "RESUME" | "CANCEL";
@@ -840,6 +912,13 @@ export interface components {
             observations?: string;
             /** Format: date-time */
             recorded_at?: string | null;
+        };
+        MediaPlaybackSession: {
+            stream_url: string;
+            download_url: string;
+            /** Format: uri */
+            drive_url: string;
+            expires_in: number;
         };
         MediaFile: {
             /** Format: uuid */
@@ -1059,6 +1138,28 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    createUploadRealtimeTicket: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ingresso criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadRealtimeTicket"];
+                };
+            };
+        };
+    };
     listUploadBatches: {
         parameters: {
             query?: never;
@@ -1825,6 +1926,114 @@ export interface operations {
             };
             /** @description Versão desatualizada */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createMediaPlaybackSession: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Company-ID": components["parameters"]["CompanyId"];
+            };
+            path: {
+                media_file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessão temporária de reprodução criada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPlaybackSession"];
+                };
+            };
+            /** @description Arquivo ausente ou não autorizado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    streamMediaPlayback: {
+        parameters: {
+            query?: never;
+            header?: {
+                Range?: string;
+            };
+            path: {
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Conteúdo completo do arquivo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Parte solicitada do arquivo */
+            206: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Ticket expirado ou arquivo indisponível */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Google Drive temporariamente indisponível */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    downloadMediaFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Arquivo transmitido como anexo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Ticket expirado ou arquivo indisponível */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Google Drive temporariamente indisponível */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

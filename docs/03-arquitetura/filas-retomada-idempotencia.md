@@ -100,6 +100,11 @@ Regras:
 
 - perda da concessão suspenderá a tarefa e permitirá reatribuição autorizada.
 
+A identificação da máquina é exclusivamente técnica e automática. Não existe etapa de
+conexão, aprovação ou liberação manual do dispositivo. O login do usuário e seu acesso
+vigente à empresa e ao projeto autorizam as operações; revogar o usuário interrompe o
+acesso de todas as instalações associadas nas validações seguintes.
+
 
 
 #### Fila local
@@ -143,8 +148,8 @@ URL retomável são proibidos no banco local.
 
 - agente poderá transmitir progresso transitório em intervalo de aproximadamente dois segundos;
 
-- frontend consulta lotes ativos a cada dois segundos; Channels permanece planejado
-  como aviso, com polling como fallback;
+- Channels avisa mudanças de lote; o frontend invalida a consulta afetada e mantém
+  polling de dois segundos como contingência quando o canal está indisponível;
 
 - PostgreSQL persistirá checkpoints periódicos, mudanças de estado e marcos relevantes de volume;
 
@@ -160,6 +165,11 @@ atualização rejeita `confirmed_bytes` inferior ao checkpoint já persistido.
 O painel restaura o último `batch_id` da empresa após recarga, mas sempre consulta o
 backend como fonte de verdade. O polling termina nos estados finais e o percentual é
 derivado de `confirmed_bytes / total_bytes`, sem regressão local.
+
+O canal usa ingresso aleatório, efêmero e de uso único emitido por uma requisição HTTP
+autenticada. O ingresso é vinculado ao usuário e à empresa, não contém token OIDC e só
+é aceito enquanto a associação estiver ativa. Bloqueio posterior encerra o canal no
+próximo evento; a perda do WebSocket não interrompe comandos nem checkpoints.
 
 No transporte atual, cada resposta `308` do Drive produz checkpoint local e central.
 Depois de reiniciar, o agente solicita novamente a sessão ao backend; o backend consulta

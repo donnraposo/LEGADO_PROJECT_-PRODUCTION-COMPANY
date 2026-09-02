@@ -14,6 +14,7 @@ interface MediaEditorProps {
     observations: string;
   }) => void;
   onTagChange: (tagId: string, selected: boolean) => void;
+  onPreview: () => void;
 }
 
 export function MediaEditor({
@@ -23,6 +24,7 @@ export function MediaEditor({
   onClose,
   onSave,
   onTagChange,
+  onPreview,
 }: MediaEditorProps) {
   const [displayName, setDisplayName] = useState(media.display_name);
   const [description, setDescription] = useState(media.description);
@@ -53,6 +55,12 @@ export function MediaEditor({
         <span>{media.media_type || "Tipo não identificado"}</span>
         <span className="status-pill">{media.status}</span>
       </div>
+
+      {media.media_type.startsWith("video/") && (
+        <button className="preview-button" onClick={onPreview} type="button">
+          ▶ Assistir vídeo
+        </button>
+      )}
 
       <form
         onSubmit={(event) => {

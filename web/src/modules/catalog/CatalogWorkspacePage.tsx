@@ -6,7 +6,10 @@ import { useAuth } from "../authentication/AuthProvider";
 import { BackendClient } from "../../shared/api/backendClient";
 import type { MediaFile } from "../../shared/api/types";
 import { formatFileSize } from "../../shared/format/fileSize";
+import { Icon } from "../../shared/ui/Icon";
 import { MediaEditor } from "./MediaEditor";
+import { MediaFileList } from "./MediaFileList";
+import { MediaPreview } from "./MediaPreview";
 import { DriveConnectionPanel } from "../drive/DriveConnectionPanel";
 import { UploadBatchPanel } from "../uploads/UploadBatchPanel";
 
@@ -22,6 +25,7 @@ export function CatalogWorkspacePage() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [notice, setNotice] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => api.me() });
   const companies = useQuery({ queryKey: ["companies"], queryFn: () => api.companies() });
@@ -100,8 +104,26 @@ export function CatalogWorkspacePage() {
     },
   });
 
+  const mediaAccess = useMutation({
+    mutationFn: ({ item }: { item: MediaFile; action: "download" | "drive"; popup?: Window | null }) =>
+      api.mediaPlayback(companyId, item.id),
+    onSuccess: (session, variables) => {
+      if (variables.action === "drive") {
+        if (variables.popup) variables.popup.location.href = session.drive_url;
+        else window.open(session.drive_url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = session.download_url;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    },
+    onError: (_error, variables) => variables.popup?.close(),
+  });
+
   const error =
-    companies.error || projects.error || media.error || saveMedia.error || changeTag.error;
+    companies.error || projects.error || media.error || saveMedia.error || changeTag.error || mediaAccess.error;
 
   return (
     <div className="app-frame">
@@ -111,6 +133,9 @@ export function CatalogWorkspacePage() {
           <div><strong>GERENCIADOR DE ÁUDIO VISUAL</strong><small>Acervo audiovisual</small></div>
         </div>
         <div className="session-area">
+          <button className="ghost-button" type="button" onClick={() => navigate("/")}>
+            <Icon name="grid" size={16} /> Empresas
+          </button>
           <span className="online-dot" />
           <span>{currentCompany?.name ?? "Carregando empresa…"}</span>
           <button className="ghost-button" type="button" onClick={() => void auth.logout()}>
@@ -210,22 +235,19 @@ export function CatalogWorkspacePage() {
           ) : media.data?.items.length === 0 ? (
             <div className="empty-state"><strong>Nenhum arquivo encontrado</strong><span>Organize arquivos pelo agente local ou ajuste sua busca.</span></div>
           ) : (
-            <div className="media-list">
-              {(media.data?.items ?? []).map((item: MediaFile) => (
-                <button
-                  type="button"
-                  className={`media-row ${selectedId === item.id ? "selected" : ""}`}
-                  key={item.id}
-                  onClick={() => { setSelectedId(item.id); setNotice(""); }}
-                >
-                  <span className="file-icon">{item.media_type.startsWith("video") ? "▶" : "▣"}</span>
-                  <span className="file-main"><strong>{item.display_name}</strong><small>{item.original_name}</small></span>
-                  <span>{formatFileSize(item.size_bytes)}</span>
-                  <span className="tag-preview">{item.tags.map((tag) => tag.name).join(" · ") || "Sem tags"}</span>
-                  <span className="status-pill">{item.status}</span>
-                </button>
-              ))}
-            </div>
+            <MediaFileList
+              items={media.data?.items ?? []}
+              selectedId={selectedId}
+              busyId={mediaAccess.isPending ? mediaAccess.variables?.item.id : undefined}
+              onSelect={(item) => { setSelectedId(item.id); setNotice(""); }}
+              onPreview={(item) => { setSelectedId(item.id); setPreviewOpen(true); }}
+              onDownload={(item) => mediaAccess.mutate({ item, action: "download" })}
+              onOpenDrive={(item) => {
+                const popup = window.open("about:blank", "_blank");
+                if (popup) popup.opener = null;
+                mediaAccess.mutate({ item, action: "drive", popup });
+              }}
+            />
           )}
         </section>
       </main>
@@ -235,9 +257,18 @@ export function CatalogWorkspacePage() {
           media={selected}
           tags={tags.data?.items ?? []}
           busy={saveMedia.isPending || changeTag.isPending}
-          onClose={() => setSelectedId("")}
+          onClose={() => { setSelectedId(""); setPreviewOpen(false); }}
+          onPreview={() => setPreviewOpen(true)}
           onSave={(values) => saveMedia.mutate(values)}
           onTagChange={(tagId, checked) => changeTag.mutate({ tagId, checked })}
+        />
+      )}
+      {selected && previewOpen && (
+        <MediaPreview
+          api={api}
+          companyId={companyId}
+          media={selected}
+          onClose={() => setPreviewOpen(false)}
         />
       )}
     </div>

@@ -13,6 +13,9 @@ from legado_agent.infrastructure.persistence.sqlite_local_repository import SQLi
 from legado_agent.infrastructure.persistence.sqlite_organization_repository import (
     SQLiteOrganizationRepository,
 )
+from legado_agent.infrastructure.persistence.sqlite_settings_repository import (
+    SQLiteSettingsRepository,
+)
 from legado_agent.infrastructure.persistence.sqlite_upload_repository import (
     SQLiteUploadRepository,
 )
@@ -42,6 +45,7 @@ def main() -> int:
         SQLiteOrganizationRepository(database),
         AgentSession(),
         SQLiteUploadRepository(database),
+        SQLiteSettingsRepository(database),
     )
     window.show()
     return application.exec()

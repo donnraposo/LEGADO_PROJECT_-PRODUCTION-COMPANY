@@ -2,7 +2,7 @@
 
 **Produto:** Gerenciador de Áudio Visual.
 
-**Atualizado em:** 29 de agosto de 2026.
+**Atualizado em:** 31 de agosto de 2026.
 
 Documento operacional para qualquer pessoa ou IA retomar o projeto sem depender do
 histórico de conversas. Regras de negócio e decisões arquiteturais continuam nos
@@ -33,9 +33,9 @@ retornar ao último commit.
 | 3 — análise e prévia | IMPLEMENTADO — AGUARDA VALIDAÇÃO | análise somente leitura, SHA-256, conflitos, prévia e 17 testes agente |
 | 4 — organização segura | IMPLEMENTADO — AGUARDA VALIDAÇÃO | movimentação, checkpoints, catálogo e abertura contextual implementados; falta ensaio funcional |
 | 5 — frontend web | EM IMPLEMENTAÇÃO | primeira fatia Docker com autenticação, contexto, catálogo, edição e tags |
-| 6 — Drive | EM IMPLEMENTAÇÃO | OAuth, árvore, lotes, sessão e envio implementados; próximos passos são ensaio real e frontend de lotes |
-| 7 — tempo real | PLANEJADO | não iniciado |
-| 8 — fechamento | PLANEJADO | não iniciado |
+| 6 — Drive | IMPLEMENTADO — AGUARDA ENSAIOS DE FALHA | OAuth, árvore, lotes, envio real, confirmação e painel validados |
+| 7 — tempo real | IMPLEMENTADO — AGUARDA ENSAIO | WebSocket seguro, polling e reconciliação cobertos |
+| 8 — fechamento | EM IMPLEMENTAÇÃO | testes automatizados e rotinas de backup prontas; faltam ensaio e release externa |
 
 ## Software disponível
 
@@ -57,26 +57,30 @@ retornar ao último commit.
 - heartbeat, polling e ciclo de comandos;
 - seleção autenticada de empresa, cliente e projeto;
 - criação de empresa, cliente e múltiplos projetos pelos fluxos oficiais da API;
-- registro automático da máquina após seleção da empresa;
-- botão `Tentar novamente` exibido somente se o registro da máquina falhar;
+- identificação técnica automática da instalação após login e seleção da empresa;
+- nenhuma conexão, aprovação ou repetição manual de máquina; falhas transitórias são
+  repetidas automaticamente;
 - tarefas HTTP retidas até a entrega do resultado à interface Qt;
-- seleção de arquivos e pastas;
+- seleção de arquivos, pastas e HARD DISK;
 - exclusão de itens técnicos, temporários, links e junções;
 - metadados básicos e data do sistema de arquivos;
 - SHA-256 em streaming de 4 MiB;
 - duplicidades e conflitos de destino;
 - prévia selecionável, cancelável e recuperável após reinício;
-- destino escolhido antes da análise e confirmação explícita antes da organização;
+- tela de destino aberta em cada análise, com escolha entre mídia e pasta no PC;
 - resolução explícita de conflitos e duplicidades;
 - movimentação sem sobrescrita, com verificação SHA-256 entre volumes;
 - checkpoint por arquivo, interrupção e retomada sem mover novamente;
 - ingestão idempotente no catálogo sem transmitir caminhos locais.
+- último destino persistido no SQLite v5 somente como sugestão;
+- destino `Cliente/Projeto/Ano/Mês/Dia` calculado e exibido na prévia;
+- destinos dentro da origem selecionada são bloqueados para evitar recursão.
 
 ## Validações registradas
 
 ### Backend — última baseline
 
-- 63 testes aprovados;
+- 66 testes aprovados;
 - Ruff aprovado;
 - migrations aplicadas e sem mudanças pendentes;
 - OpenAPI 3.1 válido, com avisos documentais não bloqueadores;
@@ -86,7 +90,7 @@ retornar ao último commit.
 
 ### Agente — última baseline
 
-- 35 testes aprovados;
+- 41 testes aprovados;
 - Ruff aprovado;
 - SQLite v1→v4 validado sem perder o identificador da instalação;
 - conteúdo e horário dos arquivos de origem preservados;
@@ -102,7 +106,7 @@ retornar ao último commit.
 
 ### Frontend — primeira baseline
 
-- 4 testes aprovados;
+- 21 testes aprovados;
 - checagem TypeScript e build Vite aprovados;
 - imagem Docker construída e composição validada;
 - frontend e proxy do backend responderam HTTP `200`;
@@ -129,7 +133,7 @@ retornar ao último commit.
 - envio direto em blocos implementado sem passagem do binário pelo backend;
 - checkpoints persistidos no SQLite v4 e no PostgreSQL após confirmação do Drive;
 - sessão expirada renovada em nova tentativa;
-- 36 testes do agente e 64 testes backend aprovados;
+- 41 testes do agente, 66 testes backend e 21 testes frontend aprovados;
 - ensaio real aprovado em 29 de agosto de 2026 com arquivo de 17 MiB, interrupção após
   8 MiB, consulta da sessão, retomada no byte confirmado e conclusão `200`;
 - objeto `1AKCnXgcDJTU-776goINqlcwinGql4Aor` confirmado na pasta `Originais`, com
@@ -151,6 +155,14 @@ retornar ao último commit.
 - internet, autenticação, cota, disco e integridade possuem mensagens operacionais simples;
 - tokens CSS centralizam paleta, estados, superfícies, sombras, raios e dimensões.
 
+### Tempo real e reconciliação
+
+- WebSocket avisa mudanças de lote e invalida os dados mantidos pelo frontend;
+- polling continua ativo como contingência e fonte periódica de reconciliação;
+- ingresso do canal expira em 60 segundos, é usado uma única vez e não contém token OIDC;
+- associação bloqueada é rejeitada na conexão e encerra canal já aberto no próximo evento;
+- checkpoint confirmado pelo Drive atualiza PostgreSQL e corrige o SQLite antes do próximo bloco.
+
 ### Validação operacional mais recente
 
 - Docker Desktop reativado em 29 de agosto de 2026;
@@ -164,7 +176,7 @@ retornar ao último commit.
 
 - executar o agente no Python 3.14 oficial;
 - revalidar o login OIDC do agente após a troca de marca;
-- validar presença e comando `PING` ponta a ponta;
+- validar sessão autenticada e processamento de tarefa ponta a ponta;
 - ensaiar seleção, recuperação e progresso pela interface visível;
 - validar a extração avançada da data original de câmera quando houver adaptador.
 - ensaiar organização real em mesmo volume, entre volumes e após desconexão;
@@ -173,20 +185,19 @@ retornar ao último commit.
 
 ## Próxima implementação
 
-Preservar as pendências de validação e continuar a Fase 6:
+Preservar o fluxo validado e concluir a Fase 8:
 
-1. revalidar pela interface a conclusão da criação e a conexão automática da máquina;
-2. preservar a árvore idempotente validada com a conta real de ensaio;
-3. manter os contratos e a persistência idempotente de lotes já implementados;
-4. preservar o ensaio real e a confirmação de integridade já aprovados;
-5. validar visualmente criação, recuperação, progresso e controles do painel de lotes;
-6. ensaiar cota, falta de espaço e expiração de autenticação com serviços reais;
-7. implementar detecção automática de discos externos no agente;
-8. validar visualmente o fluxo completo no Windows/Python 3.14;
-9. recompilar o instalador somente após nova autorização e validação do código-fonte.
+1. revalidar pela interface o login e a sessão automática, sem ação específica da máquina;
+2. executar E2E visual completo no Windows, inclusive queda do WebSocket;
+3. ensaiar cota, falta de espaço e expiração de autenticação com serviços reais;
+4. ensaiar backup e restauração com os serviços parados;
+5. implementar detecção automática de discos externos no agente;
+6. validar o fluxo completo no Python 3.14 oficial;
+7. recompilar o instalador somente após nova autorização e validação do código-fonte;
+8. publicar tag e release somente após autorização explícita.
 
-O frontend da Fase 6 é obrigatório para o aceite do MVP. Ele usará inicialmente
-polling das APIs centrais; WebSocket permanece na Fase 7. Refresh token, credenciais
+O frontend da Fase 6 é obrigatório para o aceite do MVP. Ele usa WebSocket como aviso
+e polling automático como contingência. Refresh token, credenciais
 OAuth e URL retomável nunca serão entregues ao navegador.
 
 ## Critérios obrigatórios da Fase 4
@@ -208,4 +219,4 @@ OAuth e URL retomável nunca serão entregues ao navegador.
 4. [Organização local](../02-regras-negocio/organizacao-local.md);
 5. [Filas, retomada e idempotência](../03-arquitetura/filas-retomada-idempotencia.md);
 6. código e testes existentes em `agent/`;
-7. continuar a Fase 6 pelo ensaio real da confirmação do objeto e pela interface de lotes.
+7. continuar a Fase 8 pelos ensaios E2E, backup e restauração.

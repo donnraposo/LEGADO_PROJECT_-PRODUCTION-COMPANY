@@ -7,10 +7,11 @@
 
 **Estado:** EM IMPLEMENTAÇÃO desde 1º de agosto de 2026.
 
-**Última consolidação:** 29 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
+**Última consolidação:** 31 de agosto de 2026. Fases 0 e 1 validadas; Fases 2 e
 3 implementadas e aguardando validação funcional; Fase 4 tecnicamente concluída e
 aguardando ensaio funcional; Fase 5 executável e OAuth, árvore, lotes, sessão retomável,
-envio real em blocos e painel de lotes da Fase 6 implementados.
+envio real em blocos e painel de lotes da Fase 6 implementados; Fase 7 implementada
+com WebSocket seguro, polling de contingência e reconciliação retomável.
 
 Registro operacional do software implementado, das validações executadas, das limitações conhecidas e do ponto obrigatório de continuidade.
 
@@ -34,7 +35,7 @@ Registro operacional do software implementado, das validações executadas, das 
 **Estado:** IMPLEMENTADO — AGUARDA VALIDAÇÃO FUNCIONAL.
 
 - projeto Python 3.14 e PySide6 separado em domínio, aplicação, adaptadores e infraestrutura;
-- instalação identificada por UUID persistente e vínculo de máquina por empresa;
+- instalação identificada tecnicamente por UUID persistente, sem aprovação de máquina;
 - SQLite migrável com fila idempotente e sem senha, token ou credencial;
 - login OIDC Authorization Code com PKCE S256 no navegador e retorno em `localhost`;
 - token mantido somente na memória do processo e descartado no encerramento;
@@ -44,13 +45,19 @@ Registro operacional do software implementado, das validações executadas, das 
 - criação guiada de empresa, cliente e múltiplos projetos pela API central;
 - projetos filtrados pelo cliente selecionado e contexto atualizado sem reiniciar;
 - tarefas HTTP mantidas vivas até o retorno à interface, evitando estado visual preso;
-- registro da máquina iniciado automaticamente após carregar a empresa;
-- ação `Tentar novamente` oculta no fluxo normal e exibida apenas após falha;
+- identificação técnica iniciada silenciosamente após login e seleção da empresa;
+- falhas transitórias da sessão são repetidas automaticamente, sem ação do usuário;
 - realm local declarativo com clientes `legado-agent`, `legado-web` e `legado-api`.
+- ação de autenticação identificada como `LOGIN`;
+- botão `Selecionar HD` inclui uma mídia inteira nas origens da análise;
+- cada análise abre a escolha de mídia ou pasta no PC para o destino;
+- último destino persiste em `agent_settings` no SQLite v5 somente como sugestão;
+- subpastas de cliente, projeto e data são calculadas automaticamente e mostradas na prévia;
+- destino dentro da origem selecionada é bloqueado para impedir processamento recursivo.
 
 ### Upload direto no agente
 
-**Estado:** IMPLEMENTADO COM GATEWAY SIMULADO — AGUARDA ENSAIO NO DRIVE REAL.
+**Estado:** IMPLEMENTADO E VALIDADO NO DRIVE REAL — AGUARDA ENSAIOS DE FALHA.
 
 - comando `UPLOAD_FILE` referencia somente o item central;
 - backend devolve sessão, versão lógica, tamanho e checksum após validar a máquina;
@@ -72,7 +79,7 @@ Registro operacional do software implementado, das validações executadas, das 
 
 **Estado:** IMPLEMENTADO — AGUARDA VALIDAÇÃO FUNCIONAL.
 
-- seleção acumulável de arquivos e pastas pela interface;
+- seleção acumulável de arquivos, pastas e HARD DISK pela interface;
 - varredura somente leitura sem seguir links ou junções;
 - lixeira, diretórios técnicos, arquivos temporários e itens do sistema ignorados;
 - nome, extensão, tipo MIME, tamanho, data e origem da data registrados localmente;
@@ -351,9 +358,18 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
   pelo agente antes do próximo bloco;
 - falhas normalizadas para internet, autenticação, cota, disco e integridade, mantendo
   checkpoint monotônico e mensagem simples no painel.
+- status técnicos de lote, arquivo e tentativa permanecem estáveis nos contratos, mas
+  são apresentados em português no painel por um mapeamento visual centralizado;
 - 36 testes automatizados do agente, 5 testes do frontend, checagem TypeScript, build
   Vite e 64 testes do backend aprovados no fechamento dos controles operacionais;
 - backend e frontend reconstruídos após as migrations e confirmados saudáveis.
+- WebSocket implementado como aviso com polling de contingência e reconexão exponencial;
+- ingresso efêmero de uso único validado, sem token OIDC na URL;
+- bloqueio da associação encerra canal já aberto no próximo evento;
+- reconciliação Drive → PostgreSQL → SQLite coberta antes da retomada do próximo bloco;
+- 66 testes do backend, 41 testes do agente e 21 testes do frontend aprovados;
+- TypeScript, build Vite, contrato OpenAPI gerado e Ruff do escopo alterado aprovados;
+- backend e frontend reconstruídos em 31 de agosto e confirmados saudáveis.
 
 ## Limitações conhecidas
 
@@ -367,22 +383,22 @@ O contrato vigente está em `contracts/openapi/v1.yaml`.
 - extração avançada de data original de câmera ainda não possui adaptador por formato;
 - Fases 3 e 4 ainda requerem ensaio manual da interface com Python 3.14;
 - fluxo real do frontend e OAuth Google validados com conta de ensaio;
-- gestão web de clientes, projetos, acessos, máquinas, operações e auditoria permanece pendente;
-- WebSocket, aprovações, downloads e ensaio visual do painel permanecem pendentes.
+- gestão web de clientes, projetos, acessos, operações e auditoria permanece pendente;
+  gestão de máquinas não é requisito funcional;
+- aprovações, downloads e ensaio visual completo do painel permanecem pendentes.
 
 ## Próxima etapa obrigatória
 
-Revalidar o agente atual e continuar a Fase 6:
+Revalidar o agente atual e concluir a Fase 8:
 
-1. revalidar a conclusão visual da criação e o registro automático da máquina;
-2. preservar a árvore idempotente validada com a conta real de ensaio;
-3. preservar contratos, histórico, lotes, tentativas, checkpoints e sessões implementados;
-4. preservar o envio real agente–Drive e a confirmação de integridade aprovados;
-5. validar visualmente criação, recuperação, progresso e controles dos lotes no frontend;
-6. ensaiar cota, falta de espaço e expiração de autenticação com serviços reais;
-7. implementar detecção automática de discos externos no agente;
-8. executar o ensaio completo em Python 3.14 quando o runtime estiver disponível;
-9. recompilar o instalador somente após autorização explícita.
+1. revalidar o login e a sessão técnica automática, sem conexão específica da máquina;
+2. executar o E2E visual no Windows, inclusive desconexão do WebSocket;
+3. ensaiar cota, falta de espaço e expiração de autenticação com serviços reais;
+4. ensaiar backup e restauração em ambiente parado;
+5. implementar detecção automática de discos externos no agente;
+6. executar o ensaio completo em Python 3.14 quando o runtime estiver disponível;
+7. recompilar o instalador somente após autorização explícita;
+8. publicar a release somente após os ensaios e autorização específica.
 
 O detalhamento de retomada, limitações do ambiente e ordem de leitura está consolidado
 em [Continuidade do MVP](continuidade-mvp.md).
@@ -390,7 +406,8 @@ em [Continuidade do MVP](continuidade-mvp.md).
 ## Critérios de aceite da próxima etapa
 
 - login real abre no navegador e o reinício exige nova autenticação;
-- máquina aparece online e conclui um `PING` sem duplicar o comando;
+- login inicia a sessão automaticamente e uma tarefa é processada sem duplicação;
+- usuário removido ou bloqueado perde acesso em todas as instalações na validação seguinte;
 - fila local permanece após reinício sem armazenar token;
 - análise local não altera arquivos e calcula checksum em streaming;
 - prévia completa pode ser reaberta antes da confirmação;

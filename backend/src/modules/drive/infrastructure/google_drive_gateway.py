@@ -130,6 +130,21 @@ class GoogleDriveGateway:
             )
         )
 
+    def open_media(self, access_token: str, object_id: str, range_header: str = ""):
+        headers = {"Authorization": f"Bearer {access_token}"}
+        if range_header:
+            headers["Range"] = range_header
+        request = Request(
+            f"{self.FILES_ENDPOINT}/{quote(object_id, safe='')}?alt=media",
+            headers=headers,
+        )
+        try:
+            return urlopen(request, timeout=20)  # noqa: S310
+        except (HTTPError, URLError, TimeoutError) as exc:
+            raise GoogleOAuthExchangeError(
+                "Não foi possível reproduzir o arquivo do Google Drive."
+            ) from exc
+
     @staticmethod
     def _request_json(request: Request) -> dict:
         try:

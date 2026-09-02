@@ -148,6 +148,43 @@ def test_upload_pauses_before_next_chunk_without_regressing(tmp_path) -> None:
     assert backend.reported_states == [("PAUSED", 256 * 1024, "")]
 
 
+def test_drive_checkpoint_reconciles_stale_sqlite_before_next_chunk(tmp_path) -> None:
+    content = b"a" * (768 * 1024)
+    source = tmp_path / "video.mov"
+    source.write_bytes(content)
+    item_id, media_id = uuid4(), uuid4()
+    repository = FakeUploadRepository(media_id, source)
+    repository.job = UploadJob(
+        item_id=item_id,
+        media_file_id=media_id,
+        source_path=str(source),
+        attempt_id=uuid4(),
+        size_bytes=len(content),
+        checksum_sha256=hashlib.sha256(content).hexdigest(),
+        confirmed_bytes=256 * 1024,
+        status="INTERRUPTED",
+    )
+    backend = FakeBackend(
+        UploadSession(
+            uuid4(),
+            item_id,
+            media_id,
+            "",
+            len(content),
+            hashlib.sha256(content).hexdigest(),
+            512 * 1024,
+        )
+    )
+    transport = FakeTransport()
+
+    result = ExecuteUploadUseCase(
+        repository, backend, transport, StreamingSha256(), chunk_size=256 * 1024
+    ).execute(uuid4(), uuid4(), item_id)
+
+    assert transport.calls[0][1] == 512 * 1024
+    assert result.confirmed_bytes == len(content)
+
+
 def test_sqlite_upload_checkpoint_survives_restart_without_session_url(tmp_path) -> None:
     database = SQLiteDatabase(tmp_path / "agent.sqlite3")
     database.migrate()

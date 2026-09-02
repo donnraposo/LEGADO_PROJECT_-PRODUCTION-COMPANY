@@ -1,3 +1,6 @@
+import secrets
+
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
@@ -72,6 +75,18 @@ class UploadBatchCollectionView(APIView):
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
         return Response(result, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class UploadRealtimeTicketView(APIView):
+    def post(self, request) -> Response:
+        membership = require_company_membership(request)
+        ticket = secrets.token_urlsafe(32)
+        cache.set(
+            f"upload-ws-ticket:{ticket}",
+            {"company_id": str(membership.company_id), "user_id": str(request.user.id)},
+            timeout=60,
+        )
+        return Response({"ticket": ticket, "expires_in": 60}, status=status.HTTP_201_CREATED)
 
 
 class UploadBatchDetailView(APIView):

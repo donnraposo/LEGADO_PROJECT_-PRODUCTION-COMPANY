@@ -93,8 +93,9 @@ do agente e 6 testes de integração backend foram aprovados.
 passaram a ser mantidas pela janela até a entrega do sinal final. O defeito foi observado
 em um ensaio real no qual o backend criou a empresa com HTTP `201`, mas a interface
 permaneceu em processamento. O registro da máquina também passou a ocorrer
-automaticamente depois da seleção da empresa; `Tentar novamente` aparece somente após
-falha. A suíte do agente chegou a 31 testes e Ruff permaneceu aprovado.
+automaticamente depois da seleção da empresa; naquele incremento, `Tentar novamente`
+aparecia após falha. A decisão 0.40 removeu essa ação manual e adotou repetição
+silenciosa. A suíte do agente chegou a 31 testes e Ruff permaneceu aprovado.
 
 O instalador `0.1.1` disponível foi gerado antes dessas duas correções. A execução de
 validação deve usar o código-fonte até uma nova compilação autorizada.
@@ -106,9 +107,11 @@ validação deve usar o código-fonte até uma nova compilação autorizada.
 - heartbeat, polling, confirmação e resultado;
 - fila persistente, logs protegidos e interface inicial.
 - criação guiada de empresa, cliente e múltiplos projetos.
-- conexão automática da máquina e recuperação explícita somente após falha.
+- identificação técnica automática da instalação e recuperação silenciosa após falha.
 
-**Aceite:** máquina autentica, aparece online, recebe comando e preserva a fila; reinício exige novo login.
+**Aceite:** o login inicia a sessão sem conexão ou aprovação específica da máquina, a
+instalação recebe tarefas e preserva a fila, e o reinício exige novo login. Usuário
+removido ou bloqueado perde acesso em todas as instalações.
 
 ## Fase 3 — análise e prévia local
 
@@ -174,7 +177,7 @@ O login real e o uso com dados reais ainda aguardam ensaio manual.
 - login e seleção de empresa;
 - clientes, projetos, membros e acessos;
 - catálogo, detalhe, edição e tags;
-- máquinas, operações, fila, progresso, erros e auditoria.
+- operações, fila, progresso, erros e auditoria; gestão de máquinas não é requisito funcional.
 
 **Aceite:** pessoa não técnica executa o fluxo permitido pelo seu papel sem acessar APIs manualmente.
 
@@ -223,18 +226,18 @@ acesso a refresh token, credencial ou URL retomável.
 
 ## Fase 7 — tempo real e reconciliação
 
-**Estado:** PLANEJADO.
+**Estado:** IMPLEMENTADO — AGUARDA ENSAIO OPERACIONAL.
 
 - WebSocket como aviso e polling como fallback;
 - presença, progresso e reconexão;
 - reconciliação SQLite, PostgreSQL e Drive;
-- disponibilidade, divergências, auditoria e alertas.
+- disponibilidade e divergências; auditoria e alertas permanecem pendentes.
 
 **Aceite:** perda do WebSocket não perde comandos e arquivos reaparecidos são reconciliados pela identidade.
 
 ## Fase 8 — fechamento do MVP
 
-**Estado:** PLANEJADO.
+**Estado:** EM IMPLEMENTAÇÃO.
 
 - E2E no Windows;
 - streaming, interrupção, retomada e desconexão;
